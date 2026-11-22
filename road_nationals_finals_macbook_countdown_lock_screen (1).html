@@ -1,0 +1,2840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Road Nationals & Finals — MacBook Countdown Lock Screen</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Inter:wght@300;400;500;600&family=Oswald:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-slate: #11151a;
+      --bg-oxblood: #2a1016;
+      --ink: #eae4d3;
+      --ink-dim: rgba(234, 228, 211, 0.56);
+      --brass: #d8a458;
+      --spotify: #1DB954;
+      --hairline: rgba(234, 228, 211, 0.14);
+      --glass: rgba(17, 21, 26, 0.62);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: radial-gradient(circle at 72% 88%, rgba(74, 20, 32, 0.55) 0%, rgba(17, 21, 26, 0.96) 56%, #0c1014 100%);
+      color: var(--ink);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+
+    /* Blueprint grid with subtle parallax */
+    #blueprint-grid {
+      position: fixed;
+      inset: -24px;
+      z-index: 1;
+      pointer-events: none;
+      background-image:
+        linear-gradient(to right, rgba(234, 228, 211, 0.036) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(234, 228, 211, 0.036) 1px, transparent 1px),
+        linear-gradient(to right, rgba(234, 228, 211, 0.016) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(234, 228, 211, 0.016) 1px, transparent 1px);
+      background-size: 96px 96px, 96px 96px, 24px 24px, 24px 24px;
+      transition: transform 0.25s ease-out;
+    }
+
+    /* Subtle editorial paper grain */
+    .paper-grain {
+      position: fixed;
+      inset: 0;
+      z-index: 4;
+      pointer-events: none;
+      opacity: 0.045;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* Faint bottom winter pine silhouette */
+    .pine-horizon {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 82px;
+      z-index: 2;
+      pointer-events: none;
+      opacity: 0.16;
+    }
+
+    /* Canvas stack: Lab behind engine (z:2), Engine centerpiece (z:3) */
+    #bg-lab-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    #robotics-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    #engine-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .mono { font-family: 'IBM Plex Mono', monospace; }
+    .display { font-family: 'Oswald', sans-serif; }
+
+    .ui-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .hide-in-zen {
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .ui-layer.zen-hidden .hide-in-zen {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transform: translateY(-4px);
+    }
+
+    .pill {
+      background: var(--glass);
+      border: 1px solid var(--hairline);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .pill-btn {
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+      cursor: pointer;
+    }
+    .pill-btn:hover {
+      background: rgba(234, 228, 211, 0.09);
+      color: var(--ink);
+    }
+    .pill-btn.active {
+      color: var(--ink);
+    }
+
+    /* Compact Spotify button accent */
+    #spotifyBtn {
+      color: rgba(234, 228, 211, 0.72);
+    }
+    #spotifyBtn:hover,
+    #spotifyBtn.active {
+      color: var(--spotify);
+      background: rgba(29, 185, 84, 0.12);
+    }
+
+    /* Animated mini equalizer bars for active Spotify song */
+    @keyframes eqBounce {
+      0%, 100% { transform: scaleY(0.3); }
+      50% { transform: scaleY(1); }
+    }
+    .eq-bar {
+      width: 2px;
+      height: 10px;
+      background: var(--spotify);
+      border-radius: 99px;
+      transform-origin: bottom;
+      animation: eqBounce 0.75s ease-in-out infinite;
+    }
+    .eq-bar:nth-child(2) { animation-delay: 0.2s; }
+    .eq-bar:nth-child(3) { animation-delay: 0.4s; }
+
+    .clock-glow {
+      text-shadow: 0 2px 24px rgba(0, 0, 0, 0.55);
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(234, 228, 211, 0.18);
+      height: 3px;
+      border-radius: 999px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--ink);
+      cursor: pointer;
+    }
+
+    /* Plan shelf slide */
+    #planShelf {
+      transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+    }
+    #planShelf.collapsed {
+      transform: translateY(calc(100% + 20px));
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Zen reveal corner */
+    #zenRevealBtn {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    body.zen-mode #zenRevealZone:hover #zenRevealBtn,
+    body.zen-mode #zenRevealBtn:focus {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(234, 228, 211, 0.2); border-radius: 999px; }
+  </style>
+</head>
+<body>
+
+  <!-- Blueprint Grid Layer -->
+  <div id="blueprint-grid"></div>
+
+  <!-- Background Lab Canvas (Math Graphs + Physics + Dev Code + Snow) -->
+  <canvas id="bg-lab-canvas"></canvas>
+
+  <!-- 3D Engineering Robotics Blueprint Canvas (Behind Jet Engine) -->
+  <canvas id="robotics-canvas"></canvas>
+
+  <!-- Faint Winter Pine Horizon -->
+  <svg class="pine-horizon" viewBox="0 0 1440 90" preserveAspectRatio="none" aria-hidden="true">
+    <path fill="#eae4d3" d="M0,90 L0,76 L18,52 L28,74 L46,42 L58,76 L84,56 L96,78 L128,46 L142,80 L190,82 L212,50 L226,80 L255,62 L270,84 L360,86 L390,54 L406,84 L438,60 L452,86 L580,88 L610,64 L624,86 L790,88 L820,56 L836,84 L868,48 L886,84 L922,60 L936,86 L1080,86 L1106,44 L1124,82 L1154,54 L1170,82 L1204,38 L1224,80 L1266,52 L1284,82 L1328,46 L1348,80 L1392,58 L1412,84 L1440,66 L1440,90 Z"/>
+  </svg>
+
+  <!-- Fixed Centerpiece Blueprint Jet Engine Canvas -->
+  <canvas id="engine-canvas"></canvas>
+
+  <!-- Subtle Paper Grain -->
+  <div class="paper-grain"></div>
+
+  <!-- Zen Reveal Corner -->
+  <div id="zenRevealZone" class="fixed top-0 right-0 w-36 h-20 z-30 flex items-start justify-end p-4">
+    <button id="zenRevealBtn" class="pill px-3 py-1.5 rounded-full text-xs text-[#eae4d3]/90 hover:bg-white/10 cursor-pointer">
+      Show UI
+    </button>
+  </div>
+
+  <!-- Main UI Layer -->
+  <div id="uiLayer" class="ui-layer flex flex-col justify-between p-4 sm:p-6">
+
+    <!-- Top Row -->
+    <div class="relative w-full flex items-start justify-between">
+
+      <!-- Left: Compact Throttle Switch -->
+      <div class="hide-in-zen pointer-events-auto hidden md:flex items-center gap-1 pill rounded-full p-1 text-[10px] mono tracking-wider text-[#eae4d3]/60">
+        <button data-throttle="idle" class="throttle-btn px-2.5 py-1 rounded-full pill-btn">IDLE</button>
+        <button data-throttle="cruise" class="throttle-btn px-2.5 py-1 rounded-full pill-btn">CRUISE</button>
+        <button data-throttle="afterburner" class="throttle-btn px-2.5 py-1 rounded-full pill-btn">MAX</button>
+      </div>
+
+      <!-- Center: Natural macOS Lock Screen Clock + Borderless Countdown -->
+      <div class="mx-auto text-center pt-1 sm:pt-2 pointer-events-auto">
+        <div id="lockDate" class="text-sm sm:text-base font-medium tracking-wide text-[#eae4d3]/90 clock-glow">
+          Saturday, November 21
+        </div>
+        <div id="lockClock" class="text-6xl sm:text-7xl md:text-8xl font-semibold tracking-tight leading-none text-[#eae4d3] clock-glow mt-0.5">
+          8:09
+        </div>
+        <div class="mt-2.5 flex items-center justify-center gap-2 text-xs sm:text-sm text-[#eae4d3]/80 clock-glow">
+          <button id="cycleTargetBtn" title="Click to switch milestone" class="mono tracking-wide hover:text-[#d8a458] transition cursor-pointer">
+            <span id="countdownText">ROAD NATIONALS · 14d 11h 50m 12s</span>
+          </button>
+          <button id="editDateBtn" class="hide-in-zen text-[11px] text-[#eae4d3]/45 hover:text-[#eae4d3] underline underline-offset-2 transition cursor-pointer">
+            edit
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: Minimalist Control Pill (Audio + Short Spotify Icon + Settings + Hide UI) -->
+      <div class="hide-in-zen pointer-events-auto flex items-center gap-1 pill rounded-full px-1.5 py-1">
+        <!-- Jet + Music Audio Toggle -->
+        <button id="audioToggleBtn" class="pill-btn flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs text-[#eae4d3]/80" title="Toggle Jet Engine & Lo-Fi Audio">
+          <span id="audioDot" class="w-1.5 h-1.5 rounded-full bg-[#d8a458]"></span>
+          <span class="hidden sm:inline">Jet</span>
+        </button>
+
+        <!-- Today's Plan Menu ON/OFF Toggle -->
+        <button id="planTopToggleBtn" class="pill-btn active flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs text-[#eae4d3]/90" title="Toggle Today's Plan Menu">
+          <span id="planTopDot" class="w-1.5 h-1.5 rounded-full bg-[#d8a458] shadow-[0_0_8px_rgba(216,164,88,0.8)]"></span>
+          <span class="hidden sm:inline">Plan</span>
+        </button>
+
+        <!-- Short & Clean Spotify Icon -->
+        <button id="spotifyBtn" class="pill-btn w-7 h-7 rounded-full flex items-center justify-center" title="Spotify Mini-Player" aria-label="Spotify Mini-Player">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 1.5C6.2 1.5 1.5 6.2 1.5 12S6.2 22.5 12 22.5 22.5 17.8 22.5 12 17.8 1.5 12 1.5zm4.81 15.14a.75.75 0 01-1.03.25c-2.82-1.72-6.37-2.11-10.55-1.15a.75.75 0 01-.33-1.46c4.58-1.05 8.5-.6 11.66 1.33.36.22.47.68.25 1.03zm1.28-2.86a.94.94 0 01-1.29.31c-3.23-1.98-8.15-2.56-11.97-1.4a.94.94 0 11-.55-1.8c4.36-1.32 9.78-.68 13.5 1.6.44.27.58.85.31 1.29zm.11-2.98c-3.87-2.3-10.26-2.51-13.96-1.39a1.12 1.12 0 11-.65-2.15c4.25-1.29 11.31-1.04 15.76 1.6a1.12 1.12 0 11-1.15 1.94z"/>
+          </svg>
+        </button>
+
+        <!-- Settings Sliders -->
+        <button id="settingsBtn" class="pill-btn w-7 h-7 rounded-full flex items-center justify-center text-[#eae4d3]/75" title="Lab & Audio Settings" aria-label="Settings">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+          </svg>
+        </button>
+
+        <!-- Hide UI -->
+        <button id="zenBtn" class="pill-btn px-2.5 py-1 rounded-full text-xs text-[#eae4d3]/65" title="Zen Mode">
+          Hide
+        </button>
+      </div>
+    </div>
+
+    <!-- Compact Spotify Mini-Player Popover -->
+    <div id="spotifyPopover" class="hide-in-zen hidden fixed top-16 right-4 sm:right-6 w-[308px] pill rounded-2xl p-3 pointer-events-auto text-xs text-[#eae4d3] z-30 shadow-2xl">
+      <!-- Header: Brand + Login + Close -->
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-[#1DB954]" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 1.5C6.2 1.5 1.5 6.2 1.5 12S6.2 22.5 12 22.5 22.5 17.8 22.5 12 17.8 1.5 12 1.5zm4.81 15.14a.75.75 0 01-1.03.25c-2.82-1.72-6.37-2.11-10.55-1.15a.75.75 0 01-.33-1.46c4.58-1.05 8.5-.6 11.66 1.33.36.22.47.68.25 1.03zm1.28-2.86a.94.94 0 01-1.29.31c-3.23-1.98-8.15-2.56-11.97-1.4a.94.94 0 11-.55-1.8c4.36-1.32 9.78-.68 13.5 1.6.44.27.58.85.31 1.29zm.11-2.98c-3.87-2.3-10.26-2.51-13.96-1.39a1.12 1.12 0 11-.65-2.15c4.25-1.29 11.31-1.04 15.76 1.6a1.12 1.12 0 11-1.15 1.94z"/>
+          </svg>
+          <span class="font-medium tracking-wide text-[#eae4d3]">Spotify</span>
+          <span id="spotifyUserBadge" class="hidden mono text-[9px] px-1.5 py-0.5 rounded bg-[#1DB954]/20 text-[#1DB954]"></span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="spotifyLoginToggleBtn" class="text-[10px] px-2 py-0.5 rounded-full bg-white/10 hover:bg-[#1DB954]/25 hover:text-[#1DB954] transition cursor-pointer">
+            Log in
+          </button>
+          <button id="closeSpotifyBtn" class="text-[#eae4d3]/50 hover:text-[#eae4d3] cursor-pointer">✕</button>
+        </div>
+      </div>
+
+      <!-- Collapsible Login / Account Sync Panel -->
+      <div id="spotifyLoginPanel" class="hidden mb-2.5 p-2.5 rounded-xl bg-black/35 border border-white/10 space-y-2">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-[10px] text-[#eae4d3]/70">Full-length playback:</span>
+          <a href="https://accounts.spotify.com/login" target="_blank" rel="noopener noreferrer"
+             class="px-2.5 py-1 rounded-full bg-[#1DB954] text-[#0c1014] font-semibold text-[10px] hover:brightness-110 transition">
+            Sign in to Spotify ↗
+          </a>
+        </div>
+        <form id="spotifyOAuthForm" class="flex gap-1.5 pt-1 border-t border-white/10">
+          <input id="spotifyClientIdInput" type="text" placeholder="Optional PKCE Client ID (sync top tracks)"
+            class="flex-1 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-[10px] text-[#eae4d3] placeholder-[#eae4d3]/35 focus:outline-none focus:border-[#1DB954]/50" />
+          <button type="submit" class="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[10px] cursor-pointer">Sync</button>
+        </form>
+        <button id="spotifyLogoutBtn" class="hidden w-full py-1 rounded-lg bg-red-500/15 hover:bg-red-500/25 text-red-300 text-[10px] cursor-pointer">
+          Disconnect Account
+        </button>
+      </div>
+
+      <!-- Compact 80px Spotify Embed -->
+      <div class="rounded-xl overflow-hidden bg-black/40 border border-white/10 mb-2">
+        <iframe id="spotifyIframe"
+          style="border-radius:12px"
+          src="https://open.spotify.com/embed/track/4cOdK2wGLETKBW3PvgPWqT?utm_source=generator&theme=0"
+          width="100%" height="80" frameBorder="0"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          loading="lazy"></iframe>
+      </div>
+
+      <!-- Category Pills -->
+      <div class="grid grid-cols-3 gap-1 mb-2">
+        <button data-sp-cat="focus" class="sp-cat-btn py-1 rounded-lg bg-[#1DB954]/20 text-[#1DB954] text-[10px] font-medium transition cursor-pointer">Focus</button>
+        <button data-sp-cat="synth" class="sp-cat-btn py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[#eae4d3]/75 text-[10px] font-medium transition cursor-pointer">Aero Synth</button>
+        <button data-sp-cat="lofi" class="sp-cat-btn py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[#eae4d3]/75 text-[10px] font-medium transition cursor-pointer">Late Study</button>
+      </div>
+
+      <!-- Interactive Scrollable Song List -->
+      <div id="spotifyTrackList" class="max-h-32 overflow-y-auto space-y-1 pr-1 mb-2"></div>
+
+      <!-- Custom Spotify URL Loader -->
+      <form id="spotifyUrlForm" class="flex gap-1.5 mb-2">
+        <input id="spotifyUrlInput" type="text" placeholder="Paste Spotify track / playlist URL..."
+          class="flex-1 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-[10px] text-[#eae4d3] placeholder-[#eae4d3]/35 focus:outline-none focus:border-[#1DB954]/50" />
+        <button type="submit" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[10px] cursor-pointer">Load</button>
+      </form>
+
+      <!-- Mute Lo-Fi while keeping Jet Engine -->
+      <button id="duckLofiBtn" class="w-full py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] text-[#eae4d3]/80 transition cursor-pointer">
+        Mute Lo-Fi (Keep Jet Engine)
+      </button>
+    </div>
+
+    <!-- Settings & Lab Popover -->
+    <div id="settingsPopover" class="hide-in-zen hidden fixed top-16 right-4 sm:right-6 w-72 pill rounded-2xl p-4 pointer-events-auto text-xs text-[#eae4d3] z-30 shadow-2xl">
+      <div class="flex items-center justify-between mb-3">
+        <span class="font-medium tracking-wide">Lab & Audio Controls</span>
+        <button id="closeSettingsBtn" class="text-[#eae4d3]/50 hover:text-[#eae4d3] cursor-pointer">✕</button>
+      </div>
+
+      <div class="space-y-3 mb-3.5">
+        <div>
+          <div class="flex justify-between mb-1 text-[11px] text-[#eae4d3]/75">
+            <span>Jet Engine Volume</span>
+            <span id="jetVolVal" class="mono">55%</span>
+          </div>
+          <input id="jetVolSlider" type="range" min="0" max="1" step="0.02" value="0.55" class="w-full" />
+        </div>
+        <div>
+          <div class="flex justify-between mb-1 text-[11px] text-[#eae4d3]/75">
+            <span>Lo-Fi Rhodes Volume</span>
+            <span id="lofiVolVal" class="mono">45%</span>
+          </div>
+          <input id="lofiVolSlider" type="range" min="0" max="1" step="0.02" value="0.45" class="w-full" />
+        </div>
+        <div>
+          <div class="flex justify-between mb-1 text-[11px] text-[#eae4d3]/75">
+            <span>Background Lab Opacity</span>
+            <span id="labOpacityVal" class="mono">85%</span>
+          </div>
+          <input id="labOpacitySlider" type="range" min="0.15" max="1" step="0.05" value="0.85" class="w-full" />
+        </div>
+      </div>
+
+      <div class="border-t border-white/10 pt-3 mb-3">
+        <div class="text-[10px] mono uppercase tracking-wider text-[#eae4d3]/50 mb-2">Background Layers</div>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button data-layer="robotics" class="layer-chip py-1.5 rounded-lg text-[11px]">3D Robotics</button>
+          <button data-layer="math" class="layer-chip py-1.5 rounded-lg text-[11px]">Math Graphs</button>
+          <button data-layer="physics" class="layer-chip py-1.5 rounded-lg text-[11px]">Physics Sims</button>
+          <button data-layer="code" class="layer-chip py-1.5 rounded-lg text-[11px]">Live Code</button>
+          <button data-layer="snow" class="layer-chip col-span-2 py-1.5 rounded-lg text-[11px]">❄ Winter Snow</button>
+        </div>
+      </div>
+
+      <div class="flex gap-1.5">
+        <button id="randomizeLabBtn" class="flex-1 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-[11px] transition cursor-pointer">
+          ↻ Randomize Lab
+        </button>
+        <button id="fullscreenBtn" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-[11px] transition cursor-pointer">
+          Fullscreen
+        </button>
+      </div>
+    </div>
+
+    <!-- Inline Milestone Date Editor Popover -->
+    <div id="dateEditorPopover" class="hide-in-zen hidden fixed top-36 left-1/2 -translate-x-1/2 w-80 pill rounded-2xl p-4 pointer-events-auto text-xs text-[#eae4d3] z-30 shadow-2xl">
+      <div class="flex items-center justify-between mb-3">
+        <span class="font-medium">Edit Milestone Dates</span>
+        <button id="closeDateEditorBtn" class="text-[#eae4d3]/50 hover:text-[#eae4d3] cursor-pointer">✕</button>
+      </div>
+      <div id="dateInputsContainer" class="space-y-2.5"></div>
+      <button id="saveDatesBtn" class="mt-3.5 w-full py-2 rounded-xl bg-[#d8a458]/25 hover:bg-[#d8a458]/35 text-[#eae4d3] font-medium transition cursor-pointer">
+        Save Dates
+      </button>
+    </div>
+
+    <!-- Bottom Area: Today's Plan Menu Dock (Open by default, toggleable ON / OFF) -->
+    <div class="hide-in-zen w-full flex flex-col items-center pointer-events-none">
+      <!-- Compact Toggle Tab (always accessible to turn menu ON or OFF) -->
+      <button id="planToggleBtn" class="pointer-events-auto pill px-3.5 py-1 rounded-full text-[11px] text-[#eae4d3]/90 hover:bg-white/10 transition flex items-center gap-2 cursor-pointer mb-2 shadow-lg">
+        <span id="planTabDot" class="w-1.5 h-1.5 rounded-full bg-[#d8a458] shadow-[0_0_8px_rgba(216,164,88,0.8)]"></span>
+        <span class="font-medium tracking-wide">Today's Plan</span>
+        <span id="planStatusBadge" class="mono text-[9px] uppercase px-1.5 py-0.5 rounded bg-[#d8a458]/20 text-[#d8a458]">ON</span>
+        <span id="planArrow" class="text-[9px] text-[#eae4d3]/55">▼</span>
+      </button>
+
+      <!-- Menu-Style Plan Panel (Starts visible / ON) -->
+      <div id="planShelf" class="pointer-events-auto w-full max-w-4xl pill rounded-2xl overflow-hidden shadow-2xl">
+        <!-- Menu Header Bar -->
+        <div class="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-white/[0.02]">
+          <div class="flex items-center gap-2">
+            <svg class="w-3.5 h-3.5 text-[#d8a458]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+            </svg>
+            <span class="mono text-[10px] uppercase tracking-[0.16em] text-[#eae4d3]/80">Today's Plan Menu</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span id="planTotalProgress" class="mono text-[10px] text-[#d8a458]/90">0/6 DONE</span>
+            <button id="planCloseMenuBtn" class="mono text-[10px] text-[#eae4d3]/50 hover:text-[#eae4d3] transition cursor-pointer">
+              OFF ✕
+            </button>
+          </div>
+        </div>
+        <!-- 3-Column Menu Grid -->
+        <div id="planGrid" class="p-3.5 grid grid-cols-1 md:grid-cols-3 gap-3.5 md:divide-x md:divide-white/10">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subtle Whisper Toast -->
+  <div id="whisperToast" class="fixed bottom-16 left-1/2 -translate-x-1/2 z-40 pill px-3.5 py-1.5 rounded-full text-xs text-[#eae4d3]/90 opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+  <script>
+    /*************************************************************************
+     * 1. STATE, PERSISTENCE & CORE CANVAS SETUP
+     *************************************************************************/
+    const DEFAULT_MILESTONES = [
+      { id: 'race',   label: 'ROAD NATIONALS', date: '2026-12-06T08:00' },
+      { id: 'finals', label: 'FINALS',         date: '2026-12-14T09:00' },
+      { id: 'track',  label: 'TRACK SESSION',  date: '2026-11-24T16:30' },
+      { id: 'code',   label: 'CODING PROJECT', date: '2026-11-30T23:59' }
+    ];
+
+    const DEFAULT_PLAN = {
+      running: [
+        { text: '4x800m track intervals + drills', done: false },
+        { text: '15 min easy cooldown & stretch', done: false }
+      ],
+      biking: [
+        { text: '90 min Zone 2 + tempo climbs', done: false },
+        { text: 'Check drivetrain & tire pressure', done: false }
+      ],
+      finals: [
+        { text: 'Calculus practice set (integrals)', done: false },
+        { text: 'Push clean commit on coding project', done: false }
+      ]
+    };
+
+    function loadJSON(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : structuredClone(fallback);
+      } catch {
+        return structuredClone(fallback);
+      }
+    }
+
+    function saveJSON(key, val) {
+      try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+    }
+
+    let milestones = loadJSON('aero_milestones_v3', DEFAULT_MILESTONES);
+    let activeMilestoneIdx = 0;
+    let planData = loadJSON('aero_plan_v3', DEFAULT_PLAN);
+
+    const layers = {
+      robotics: true,
+      math: true,
+      physics: true,
+      code: true,
+      snow: true
+    };
+    let labOpacity = 0.85;
+    let throttleMode = 'cruise';
+    let targetRpm = 1.0;
+    let currentRpm = 1.0;
+
+    let mouseNX = 0, mouseNY = 0;
+    window.addEventListener('mousemove', (e) => {
+      mouseNX = (e.clientX / window.innerWidth) * 2 - 1;
+      mouseNY = (e.clientY / window.innerHeight) * 2 - 1;
+      const grid = document.getElementById('blueprint-grid');
+      if (grid) {
+        grid.style.transform = `translate3d(${(-mouseNX * 8).toFixed(1)}px, ${(-mouseNY * 8).toFixed(1)}px, 0)`;
+      }
+    });
+
+    let whisperTimer = null;
+    function whisper(msg) {
+      const el = document.getElementById('whisperToast');
+      if (!el) return;
+      el.textContent = msg;
+      el.style.opacity = '1';
+      clearTimeout(whisperTimer);
+      whisperTimer = setTimeout(() => { el.style.opacity = '0'; }, 2200);
+    }
+
+    const labCanvas = document.getElementById('bg-lab-canvas');
+    const lctx = labCanvas.getContext('2d');
+    const engineCanvas = document.getElementById('engine-canvas');
+    const ectx = engineCanvas.getContext('2d');
+
+    let W = window.innerWidth;
+    let H = window.innerHeight;
+    let DPR = Math.min(window.devicePixelRatio || 1, 2);
+    let snowParticles = [];
+
+    function initSnow() {
+      snowParticles = [];
+      const count = Math.min(90, Math.floor((W * H) / 16000));
+      for (let i = 0; i < count; i++) {
+        snowParticles.push({
+          x: Math.random() * W,
+          y: Math.random() * H,
+          r: 0.7 + Math.random() * 1.4,
+          vx: -6 + Math.random() * 12,
+          vy: 14 + Math.random() * 24,
+          alpha: 0.14 + Math.random() * 0.28,
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+    }
+
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth;
+      H = window.innerHeight;
+
+      [labCanvas, engineCanvas].forEach(c => {
+        c.width = Math.floor(W * DPR);
+        c.height = Math.floor(H * DPR);
+      });
+      lctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ectx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+      initSnow();
+      resizeRobotics3D();
+    }
+
+    /*************************************************************************
+     * 2B. 3D TECHNICAL PENCIL-SKETCH OPTIMUS HUMANOID & GEAR MACHINE
+     *     (Invisible-fill Fresnel contours, pen cross-hatching & moving gears)
+     *************************************************************************/
+    let rRenderer = null, rScene = null, rCamera = null;
+    let humanoidRig = null;
+    let armRig = null;
+    let gearRig = null;
+    let roboticsReady = false;
+
+    // Parametric smooth organic loft generator (preserves exact realistic Optimus silhouette)
+    function createLoftedGeometry(rings, radialSegs = 40) {
+      const positions = [];
+      const uvs = [];
+      const indices = [];
+
+      for (let i = 0; i < rings.length; i++) {
+        const r = rings[i];
+        const v = i / (rings.length - 1);
+        const rx = r.rx;
+        const rz = r.rz;
+        const zOff = r.zOff || 0;
+        const chest = r.chest || 0;
+        const backFlat = r.backFlat || 0;
+        const shoulderLift = r.shoulderLift || 0;
+
+        for (let j = 0; j <= radialSegs; j++) {
+          const u = j / radialSegs;
+          const th = u * Math.PI * 2;
+          const c = Math.cos(th);
+          const s = Math.sin(th);
+
+          let x = rx * c;
+          let z = rz * s + zOff;
+          let y = r.y;
+
+          if (s > 0 && chest) {
+            const pec = Math.pow(s, 1.4) * (1.0 - 0.18 * Math.exp(-Math.pow(c * 4.5, 2)));
+            z += chest * pec;
+          }
+          if (s < 0 && backFlat) {
+            z += backFlat * Math.pow(-s, 1.6);
+          }
+          if (shoulderLift) {
+            y += shoulderLift * Math.pow(Math.abs(c), 2.0);
+          }
+
+          positions.push(x, y, z);
+          uvs.push(u, v);
+        }
+      }
+
+      const stride = radialSegs + 1;
+      for (let i = 0; i < rings.length - 1; i++) {
+        for (let j = 0; j < radialSegs; j++) {
+          const a = i * stride + j;
+          const b = a + 1;
+          const c = (i + 1) * stride + j;
+          const d = c + 1;
+          indices.push(a, c, b);
+          indices.push(b, c, d);
+        }
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+      geo.setIndex(indices);
+      geo.computeVertexNormals();
+      return geo;
+    }
+
+    // Custom GLSL Invisible-Fill Technical Sketch Shader:
+    // Draws crisp Fresnel silhouette outlines + delicate Da Vinci diagonal pencil cross-hatching
+    // while keeping the interior ghostly/transparent like the math sketches.
+    function createSketchShaderMaterial({
+      inkHex = 0xeae4d3,
+      rimPower = 2.1,
+      rimIntensity = 0.72,
+      hatchDensity = 34.0,
+      hatchIntensity = 0.24,
+      baseAlpha = 0.02
+    } = {}) {
+      return new THREE.ShaderMaterial({
+        uniforms: {
+          uInk: { value: new THREE.Color(inkHex) },
+          uLightDir: { value: new THREE.Vector3(-0.55, 0.72, 0.42).normalize() },
+          uRimPower: { value: rimPower },
+          uRimIntensity: { value: rimIntensity },
+          uHatchDensity: { value: hatchDensity },
+          uHatchIntensity: { value: hatchIntensity },
+          uBaseAlpha: { value: baseAlpha }
+        },
+        vertexShader: `
+          varying vec3 vNormalView;
+          varying vec3 vViewDir;
+          varying vec3 vWorldPos;
+          void main() {
+            vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
+            vNormalView = normalize(normalMatrix * normal);
+            vViewDir = normalize(-mvPos.xyz);
+            vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
+            gl_Position = projectionMatrix * mvPos;
+          }
+        `,
+        fragmentShader: `
+          uniform vec3 uInk;
+          uniform vec3 uLightDir;
+          uniform float uRimPower;
+          uniform float uRimIntensity;
+          uniform float uHatchDensity;
+          uniform float uHatchIntensity;
+          uniform float uBaseAlpha;
+          varying vec3 vNormalView;
+          varying vec3 vViewDir;
+          varying vec3 vWorldPos;
+
+          void main() {
+            vec3 N = normalize(vNormalView);
+            vec3 V = normalize(vViewDir);
+            float ndotv = clamp(abs(dot(N, V)), 0.0, 1.0);
+
+            // Crisp hand-drawn contour silhouette around curved 3D edges
+            float rim = pow(1.0 - ndotv, uRimPower);
+            float crispEdge = smoothstep(0.55, 0.94, 1.0 - ndotv);
+
+            // Subtle pencil cross-hatching in shadowed folds (Da Vinci drafting feel)
+            float ndotl = dot(N, normalize(uLightDir));
+            float shade = clamp(0.68 - ndotl * 0.65, 0.0, 1.0);
+
+            float p1 = sin((vWorldPos.x * 1.15 + vWorldPos.y * 1.35 + vWorldPos.z * 0.7) * uHatchDensity);
+            float p2 = sin((vWorldPos.x * 1.25 - vWorldPos.y * 1.10 + vWorldPos.z * 0.6) * (uHatchDensity * 0.82));
+            float hatch1 = smoothstep(0.76, 0.96, p1) * shade;
+            float hatch2 = smoothstep(0.84, 0.98, p2) * smoothstep(0.45, 0.95, shade);
+
+            float alpha = uBaseAlpha
+              + rim * uRimIntensity * 0.68
+              + crispEdge * uRimIntensity * 0.52
+              + (hatch1 * 0.65 + hatch2 * 0.45) * uHatchIntensity;
+
+            if (alpha < 0.025) discard;
+            gl_FragColor = vec4(uInk, clamp(alpha, 0.0, 0.78));
+          }
+        `,
+        transparent: true,
+        depthWrite: false,
+        side: THREE.FrontSide
+      });
+    }
+
+    // Subtle chalk-ink T E S L A chest lettering
+    function createTeslaSketchTexture() {
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 96;
+      const g = c.getContext('2d');
+      g.clearRect(0, 0, c.width, c.height);
+      g.fillStyle = 'rgba(234, 228, 211, 0.55)';
+      g.font = '400 24px "IBM Plex Mono", monospace';
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      ['T', 'E', 'S', 'L', 'A'].forEach((ch, idx) => {
+        g.fillText(ch, 116 + idx * 70, 48);
+      });
+      const tex = new THREE.CanvasTexture(c);
+      tex.anisotropy = 4;
+      return tex;
+    }
+
+    // Shared Invisible-Fill Technical Sketch Materials
+    function createSketchMaterials() {
+      return {
+        shell: createSketchShaderMaterial({
+          inkHex: 0xeae4d3,
+          rimPower: 1.95,
+          rimIntensity: 0.76,
+          hatchDensity: 36.0,
+          hatchIntensity: 0.24,
+          baseAlpha: 0.015
+        }),
+        inner: createSketchShaderMaterial({
+          inkHex: 0xeae4d3,
+          rimPower: 2.2,
+          rimIntensity: 0.55,
+          hatchDensity: 46.0,
+          hatchIntensity: 0.30,
+          baseAlpha: 0.01
+        }),
+        visor: createSketchShaderMaterial({
+          inkHex: 0xd8a458,
+          rimPower: 1.7,
+          rimIntensity: 0.65,
+          hatchDensity: 28.0,
+          hatchIntensity: 0.14,
+          baseAlpha: 0.02
+        }),
+        brass: createSketchShaderMaterial({
+          inkHex: 0xd8a458,
+          rimPower: 1.8,
+          rimIntensity: 0.70,
+          hatchDensity: 40.0,
+          hatchIntensity: 0.22,
+          baseAlpha: 0.015
+        }),
+        lineInk: new THREE.LineBasicMaterial({
+          color: 0xeae4d3,
+          transparent: true,
+          opacity: 0.24,
+          depthWrite: false
+        }),
+        lineFaint: new THREE.LineBasicMaterial({
+          color: 0xeae4d3,
+          transparent: true,
+          opacity: 0.13,
+          depthWrite: false
+        }),
+        lineBrass: new THREE.LineBasicMaterial({
+          color: 0xd8a458,
+          transparent: true,
+          opacity: 0.34,
+          depthWrite: false
+        }),
+        ledCore: new THREE.MeshBasicMaterial({
+          color: 0xeae4d3,
+          transparent: true,
+          opacity: 0.62,
+          depthWrite: false
+        })
+      };
+    }
+
+    // Helper: creates an invisible-fill sketch mesh with optional technical edge lines
+    function makeSketchPart(geo, mat, edgeMat = null, edgeAngle = 22) {
+      const mesh = new THREE.Mesh(geo, mat);
+      if (edgeMat) {
+        const edges = new THREE.EdgesGeometry(geo, edgeAngle);
+        mesh.add(new THREE.LineSegments(edges, edgeMat));
+      }
+      return mesh;
+    }
+
+    // Helper: faint drafting construction circle for joints & exploded CAD accents
+    function makeDraftCircle(radius, mat, segs = 48) {
+      const pts = [];
+      for (let i = 0; i <= segs; i++) {
+        const a = (i / segs) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a) * radius, Math.sin(a) * radius, 0));
+      }
+      return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat);
+    }
+
+    // Build realistic sculpted Tesla Optimus humanoid in ghostly technical pencil-sketch style
+    function buildOptimusHumanoid(mats) {
+      const root = new THREE.Group();
+      const rig = { root, fingersL: [], fingersR: [], halos: [] };
+
+      // Ground blueprint calibration rings + crosshairs (like Da Vinci drafting circles)
+      [0.64, 0.72].forEach((rad, i) => {
+        const ring = makeDraftCircle(rad, i === 0 ? mats.lineBrass : mats.lineFaint, 64);
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.y = -1.78;
+        root.add(ring);
+        rig.halos.push(ring);
+      });
+
+      // ---- 1. SCULPTED PELVIS & HIP ACTUATOR SKETCH ----
+      rig.pelvis = new THREE.Group();
+      rig.pelvis.position.y = -0.10;
+      root.add(rig.pelvis);
+
+      const pelvisBridge = makeSketchPart(
+        createLoftedGeometry([
+          { y: -0.12, rx: 0.19, rz: 0.12, zOff: -0.01 },
+          { y: -0.02, rx: 0.23, rz: 0.13, zOff: 0.00 },
+          { y:  0.08, rx: 0.16, rz: 0.10, zOff: 0.00 },
+          { y:  0.17, rx: 0.145, rz: 0.10, zOff: 0.00 }
+        ], 32),
+        mats.inner, mats.lineFaint, 24
+      );
+      rig.pelvis.add(pelvisBridge);
+
+      [-1, 1].forEach(side => {
+        const hipPod = makeSketchPart(new THREE.SphereGeometry(0.115, 22, 16), mats.inner, mats.lineFaint, 28);
+        hipPod.scale.set(1.18, 0.92, 1.04);
+        hipPod.position.set(side * 0.185, -0.055, 0.005);
+        rig.pelvis.add(hipPod);
+
+        const hipRing = makeDraftCircle(0.115, mats.lineBrass, 32);
+        hipRing.rotation.y = Math.PI / 2;
+        hipRing.position.set(side * 0.23, -0.055, 0.005);
+        rig.pelvis.add(hipRing);
+
+        const hipSocket = makeSketchPart(new THREE.CylinderGeometry(0.088, 0.095, 0.16, 20), mats.inner, mats.lineInk, 26);
+        hipSocket.position.set(side * 0.155, -0.15, 0.0);
+        rig.pelvis.add(hipSocket);
+      });
+
+      // ---- 2. SCULPTED ANATOMICAL TORSO SKETCH ----
+      rig.torso = new THREE.Group();
+      rig.torso.position.y = 0.15;
+      rig.pelvis.add(rig.torso);
+
+      const lowerTorso = makeSketchPart(
+        createLoftedGeometry([
+          { y: -0.02, rx: 0.145, rz: 0.100 },
+          { y:  0.07, rx: 0.185, rz: 0.128, chest: 0.012, backFlat: 0.01 },
+          { y:  0.19, rx: 0.212, rz: 0.146, chest: 0.018, backFlat: 0.015 },
+          { y:  0.27, rx: 0.222, rz: 0.152, chest: 0.022, backFlat: 0.018 }
+        ], 36),
+        mats.inner, mats.lineFaint, 24
+      );
+      rig.torso.add(lowerTorso);
+
+      const upperChest = makeSketchPart(
+        createLoftedGeometry([
+          { y: 0.255, rx: 0.221, rz: 0.151, chest: 0.022, backFlat: 0.018 },
+          { y: 0.36,  rx: 0.242, rz: 0.162, chest: 0.032, backFlat: 0.022 },
+          { y: 0.49,  rx: 0.268, rz: 0.172, chest: 0.044, backFlat: 0.025 },
+          { y: 0.61,  rx: 0.282, rz: 0.166, chest: 0.038, backFlat: 0.024 },
+          { y: 0.70,  rx: 0.268, rz: 0.148, chest: 0.018, backFlat: 0.020 }
+        ], 40),
+        mats.shell, mats.lineFaint, 20
+      );
+      rig.torso.add(upperChest);
+
+      // Subtle architectural construction seam lines across the chest & collarbone
+      const waistLine = makeDraftCircle(0.225, mats.lineInk, 44);
+      waistLine.rotation.x = Math.PI / 2;
+      waistLine.scale.set(1.0, 0.72, 1.0);
+      waistLine.position.y = 0.26;
+      rig.torso.add(waistLine);
+
+      const collarYoke = makeSketchPart(
+        createLoftedGeometry([
+          { y: 0.685, rx: 0.274, rz: 0.150, chest: 0.016, backFlat: 0.020 },
+          { y: 0.745, rx: 0.252, rz: 0.132, chest: 0.008, backFlat: 0.016, shoulderLift: -0.02 },
+          { y: 0.805, rx: 0.145, rz: 0.105 },
+          { y: 0.865, rx: 0.095, rz: 0.092 }
+        ], 36),
+        mats.inner, mats.lineFaint, 24
+      );
+      rig.torso.add(collarYoke);
+
+      // Faint sketched T E S L A mark on chest
+      const logoGeo = new THREE.CylinderGeometry(0.245, 0.245, 0.062, 28, 1, true, -0.42, 0.84);
+      const logoMesh = new THREE.Mesh(
+        logoGeo,
+        new THREE.MeshBasicMaterial({ map: createTeslaSketchTexture(), transparent: true, depthWrite: false })
+      );
+      logoMesh.position.set(0, 0.615, -0.026);
+      rig.torso.add(logoMesh);
+
+      // ---- 3. SCULPTED HEAD, VISOR & SKETCHED LED CONTOUR ----
+      rig.head = new THREE.Group();
+      rig.head.position.y = 0.855;
+      rig.torso.add(rig.head);
+
+      const neckMesh = makeSketchPart(
+        createLoftedGeometry([
+          { y: -0.03, rx: 0.102, rz: 0.098, zOff: -0.005 },
+          { y:  0.06, rx: 0.082, rz: 0.084, zOff: -0.004 },
+          { y:  0.14, rx: 0.090, rz: 0.096, zOff:  0.004 }
+        ], 24),
+        mats.inner, mats.lineFaint, 26
+      );
+      rig.head.add(neckMesh);
+
+      const cranium = makeSketchPart(
+        createLoftedGeometry([
+          { y: 0.125, rx: 0.072, rz: 0.085, zOff:  0.022 },
+          { y: 0.175, rx: 0.108, rz: 0.126, zOff:  0.020 },
+          { y: 0.255, rx: 0.132, rz: 0.156, zOff:  0.008 },
+          { y: 0.340, rx: 0.136, rz: 0.160, zOff: -0.004 },
+          { y: 0.415, rx: 0.118, rz: 0.138, zOff: -0.012 },
+          { y: 0.465, rx: 0.072, rz: 0.084, zOff: -0.015 },
+          { y: 0.484, rx: 0.004, rz: 0.004, zOff: -0.015 }
+        ], 36),
+        mats.shell, mats.lineFaint, 24
+      );
+      rig.head.add(cranium);
+
+      const visorGeo = new THREE.SphereGeometry(0.152, 32, 24, -Math.PI * 0.36, Math.PI * 0.72, Math.PI * 0.16, Math.PI * 0.66);
+      const visor = makeSketchPart(visorGeo, mats.visor, null);
+      visor.scale.set(0.88, 1.18, 1.03);
+      visor.position.set(0, 0.305, 0.018);
+      visor.rotation.y = Math.PI / 2;
+      rig.head.add(visor);
+
+      // Iconic curved visor contour line in crisp drafting ink
+      const ledPts = [
+        new THREE.Vector3(-0.108, 0.395,  0.048),
+        new THREE.Vector3(-0.120, 0.340,  0.078),
+        new THREE.Vector3(-0.106, 0.268,  0.118),
+        new THREE.Vector3(-0.082, 0.205,  0.140),
+        new THREE.Vector3(-0.042, 0.166,  0.150),
+        new THREE.Vector3( 0.000, 0.158,  0.153),
+        new THREE.Vector3( 0.042, 0.166,  0.150),
+        new THREE.Vector3( 0.082, 0.205,  0.140),
+        new THREE.Vector3( 0.106, 0.268,  0.118),
+        new THREE.Vector3( 0.120, 0.340,  0.078),
+        new THREE.Vector3( 0.108, 0.395,  0.048)
+      ];
+      const ledCurve = new THREE.CatmullRomCurve3(ledPts);
+      rig.head.add(new THREE.Mesh(new THREE.TubeGeometry(ledCurve, 52, 0.0032, 6, false), mats.ledCore));
+
+      // ---- 4. SKETCHED ARMS & ARTICULATED 5-FINGERED HANDS ----
+      function buildArm(side) {
+        const shoulder = new THREE.Group();
+        shoulder.position.set(side * 0.312, 0.675, -0.008);
+        rig.torso.add(shoulder);
+
+        const shRing = makeDraftCircle(0.095, mats.lineBrass, 28);
+        shRing.rotation.y = Math.PI / 2;
+        shoulder.add(shRing);
+
+        const upperArm = makeSketchPart(
+          createLoftedGeometry([
+            { y: -0.455, rx: 0.058, rz: 0.060 },
+            { y: -0.340, rx: 0.068, rz: 0.070 },
+            { y: -0.180, rx: 0.082, rz: 0.084 },
+            { y: -0.040, rx: 0.095, rz: 0.096 },
+            { y:  0.045, rx: 0.086, rz: 0.086 },
+            { y:  0.090, rx: 0.042, rz: 0.045 }
+          ], 28),
+          mats.shell, mats.lineFaint, 24
+        );
+        upperArm.position.x = side * 0.015;
+        shoulder.add(upperArm);
+
+        const bicepRing = makeDraftCircle(0.076, mats.lineInk, 28);
+        bicepRing.rotation.x = Math.PI / 2;
+        bicepRing.position.set(side * 0.015, -0.25, 0);
+        shoulder.add(bicepRing);
+
+        const elbow = new THREE.Group();
+        elbow.position.set(side * 0.015, -0.48, 0);
+        shoulder.add(elbow);
+
+        const elbowJoint = makeSketchPart(new THREE.SphereGeometry(0.058, 18, 14), mats.inner, mats.lineInk, 28);
+        elbowJoint.scale.set(0.95, 1.25, 1.02);
+        elbow.add(elbowJoint);
+
+        const forearm = makeSketchPart(
+          createLoftedGeometry([
+            { y: -0.435, rx: 0.043, rz: 0.046 },
+            { y: -0.290, rx: 0.052, rz: 0.055 },
+            { y: -0.120, rx: 0.061, rz: 0.064 },
+            { y: -0.015, rx: 0.058, rz: 0.060 }
+          ], 26),
+          mats.shell, mats.lineFaint, 24
+        );
+        elbow.add(forearm);
+
+        const wrist = new THREE.Group();
+        wrist.position.y = -0.455;
+        elbow.add(wrist);
+
+        const wristRing = makeDraftCircle(0.050, mats.lineBrass, 24);
+        wristRing.rotation.x = Math.PI / 2;
+        wrist.add(wristRing);
+
+        const palm = makeSketchPart(new THREE.SphereGeometry(0.056, 16, 12), mats.inner, mats.lineInk, 26);
+        palm.scale.set(0.86, 1.22, 0.44);
+        palm.position.y = -0.095;
+        wrist.add(palm);
+
+        const fingerList = side < 0 ? rig.fingersL : rig.fingersR;
+        const fSpecs = [
+          { x: -0.032, len: 0.052, r: 0.0085 },
+          { x: -0.011, len: 0.060, r: 0.0090 },
+          { x:  0.011, len: 0.056, r: 0.0088 },
+          { x:  0.031, len: 0.045, r: 0.0078 }
+        ];
+        fSpecs.forEach((sp, fIdx) => {
+          const prox = new THREE.Group();
+          prox.position.set(sp.x * -side, -0.150, 0);
+          wrist.add(prox);
+
+          const pMesh = makeSketchPart(new THREE.CylinderGeometry(sp.r, sp.r * 0.88, sp.len, 8), mats.shell, mats.lineInk, 30);
+          pMesh.position.y = -sp.len * 0.5;
+          prox.add(pMesh);
+
+          const dist = new THREE.Group();
+          dist.position.y = -sp.len;
+          prox.add(dist);
+
+          const dMesh = makeSketchPart(new THREE.CylinderGeometry(sp.r * 0.84, sp.r * 0.65, sp.len * 0.72, 8), mats.shell, mats.lineInk, 30);
+          dMesh.position.y = -sp.len * 0.36;
+          dist.add(dMesh);
+
+          fingerList.push({ prox, dist, idx: fIdx });
+        });
+
+        const thumb = new THREE.Group();
+        thumb.position.set(-side * 0.048, -0.092, 0.016);
+        thumb.rotation.z = side * 0.52;
+        wrist.add(thumb);
+        const tMesh = makeSketchPart(new THREE.CylinderGeometry(0.010, 0.008, 0.056, 8), mats.shell, mats.lineInk, 30);
+        tMesh.position.y = -0.028;
+        thumb.add(tMesh);
+        fingerList.push({ prox: thumb, dist: null, idx: 4 });
+
+        return { shoulder, elbow, wrist };
+      }
+
+      rig.armL = buildArm(-1);
+      rig.armR = buildArm(1);
+
+      // ---- 5. SKETCHED THIGHS, KNEES & SHINS ----
+      function buildLeg(side) {
+        const hip = new THREE.Group();
+        hip.position.set(side * 0.158, -0.175, 0);
+        rig.pelvis.add(hip);
+
+        const thigh = makeSketchPart(
+          createLoftedGeometry([
+            { y: -0.70, rx: 0.072, rz: 0.078 },
+            { y: -0.50, rx: 0.088, rz: 0.096, chest: 0.010 },
+            { y: -0.24, rx: 0.104, rz: 0.112, chest: 0.014 },
+            { y: -0.05, rx: 0.100, rz: 0.106, chest: 0.008 },
+            { y:  0.03, rx: 0.062, rz: 0.068 }
+          ], 28),
+          mats.shell, mats.lineFaint, 24
+        );
+        hip.add(thigh);
+
+        const knee = new THREE.Group();
+        knee.position.y = -0.735;
+        hip.add(knee);
+
+        const kneeRing = makeDraftCircle(0.080, mats.lineBrass, 24);
+        kneeRing.rotation.y = Math.PI / 2;
+        knee.add(kneeRing);
+
+        const kneeCap = makeSketchPart(new THREE.SphereGeometry(0.070, 18, 14), mats.inner, mats.lineInk, 26);
+        kneeCap.scale.set(0.95, 1.15, 1.02);
+        knee.add(kneeCap);
+
+        const shin = makeSketchPart(
+          createLoftedGeometry([
+            { y: -0.69, rx: 0.048, rz: 0.054 },
+            { y: -0.48, rx: 0.062, rz: 0.070 },
+            { y: -0.22, rx: 0.076, rz: 0.084 },
+            { y: -0.04, rx: 0.070, rz: 0.076 }
+          ], 26),
+          mats.shell, mats.lineFaint, 24
+        );
+        knee.add(shin);
+
+        const ankle = new THREE.Group();
+        ankle.position.y = -0.725;
+        knee.add(ankle);
+
+        const foot = makeSketchPart(new THREE.SphereGeometry(0.070, 16, 12), mats.inner, mats.lineInk, 26);
+        foot.scale.set(0.76, 0.42, 1.85);
+        foot.position.set(0, -0.055, 0.055);
+        ankle.add(foot);
+
+        return { hip, knee, ankle };
+      }
+
+      rig.legL = buildLeg(-1);
+      rig.legR = buildLeg(1);
+
+      return rig;
+    }
+
+    // Procedural extruded toothed spur gear geometry (directly inspired by your Da Vinci sketch!)
+    function createSpurGearGeometry(teeth, innerR, outerR, holeR, depth) {
+      const shape = new THREE.Shape();
+      const step = (Math.PI * 2) / teeth;
+      for (let i = 0; i < teeth; i++) {
+        const a0 = i * step;
+        const a1 = a0 + step * 0.22;
+        const a2 = a0 + step * 0.34;
+        const a3 = a0 + step * 0.66;
+        const a4 = a0 + step * 0.78;
+        if (i === 0) shape.moveTo(Math.cos(a0) * innerR, Math.sin(a0) * innerR);
+        else shape.lineTo(Math.cos(a0) * innerR, Math.sin(a0) * innerR);
+        shape.lineTo(Math.cos(a1) * innerR, Math.sin(a1) * innerR);
+        shape.lineTo(Math.cos(a2) * outerR, Math.sin(a2) * outerR);
+        shape.lineTo(Math.cos(a3) * outerR, Math.sin(a3) * outerR);
+        shape.lineTo(Math.cos(a4) * innerR, Math.sin(a4) * innerR);
+      }
+      shape.closePath();
+
+      if (holeR > 0.01) {
+        const hole = new THREE.Path();
+        hole.absarc(0, 0, holeR, 0, Math.PI * 2, true);
+        shape.holes.push(hole);
+      }
+
+      const geo = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false, curveSegments: 16 });
+      geo.rotateX(Math.PI / 2);
+      geo.translate(0, depth * 0.5, 0);
+      return geo;
+    }
+
+    // Build Da Vinci-style 3D Threaded Lead-Screw & Meshing Spur-Gear Mechanism (Left Side)
+    function buildDaVinciGearMachine(mats) {
+      const root = new THREE.Group();
+      const rig = { root };
+
+      // Vertical central threaded lead-screw shaft
+      rig.screwGroup = new THREE.Group();
+      root.add(rig.screwGroup);
+
+      const coreShaft = makeSketchPart(new THREE.CylinderGeometry(0.115, 0.115, 2.35, 20), mats.inner, mats.lineFaint, 26);
+      rig.screwGroup.add(coreShaft);
+
+      // Continuous helical screw thread wrapping the shaft
+      const helixPts = [];
+      const turns = 15;
+      const steps = 220;
+      for (let i = 0; i <= steps; i++) {
+        const f = i / steps;
+        const ang = f * Math.PI * 2 * turns;
+        const y = -1.02 + f * 2.04;
+        helixPts.push(new THREE.Vector3(Math.cos(ang) * 0.132, y, Math.sin(ang) * 0.132));
+      }
+      const helixCurve = new THREE.CatmullRomCurve3(helixPts);
+      const threadGeo = new THREE.TubeGeometry(helixCurve, 240, 0.016, 5, false);
+      rig.screwGroup.add(makeSketchPart(threadGeo, mats.shell, mats.lineInk, 38));
+
+      // Upper large toothed spur gear ring (like the centerpiece of the uploaded sketch!)
+      rig.mainGear = new THREE.Group();
+      rig.mainGear.position.y = 0.16;
+      root.add(rig.mainGear);
+
+      const bigGearGeo = createSpurGearGeometry(28, 0.44, 0.54, 0.30, 0.14);
+      rig.mainGear.add(makeSketchPart(bigGearGeo, mats.shell, mats.lineInk, 20));
+
+      const innerCollar = makeSketchPart(new THREE.CylinderGeometry(0.28, 0.28, 0.24, 24), mats.inner, mats.lineInk, 24);
+      rig.mainGear.add(innerCollar);
+
+      // Lower secondary counter-rotating spur gear
+      rig.lowerGear = new THREE.Group();
+      rig.lowerGear.position.y = -0.12;
+      root.add(rig.lowerGear);
+
+      const midGearGeo = createSpurGearGeometry(22, 0.34, 0.42, 0.20, 0.11);
+      rig.lowerGear.add(makeSketchPart(midGearGeo, mats.brass, mats.lineBrass, 20));
+
+      // Meshing side pinion gear floating on the left (just like the exploded sketch!)
+      rig.pinion = new THREE.Group();
+      rig.pinion.position.set(-0.74, 0.16, 0.08);
+      root.add(rig.pinion);
+
+      const pinionGeo = createSpurGearGeometry(12, 0.14, 0.20, 0.06, 0.13);
+      rig.pinion.add(makeSketchPart(pinionGeo, mats.shell, mats.lineInk, 20));
+
+      // Faint construction leader line connecting pinion to main gear
+      const leaderGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-0.74, 0.16, 0.08),
+        new THREE.Vector3(0.0, 0.16, 0.0)
+      ]);
+      root.add(new THREE.Line(leaderGeo, mats.lineBrass));
+
+      // Lower flanged bearing housing drum (matching bottom pedestal of sketch)
+      const baseFlange = makeSketchPart(new THREE.CylinderGeometry(0.42, 0.44, 0.14, 32), mats.shell, mats.lineInk, 22);
+      baseFlange.position.y = -0.78;
+      root.add(baseFlange);
+
+      const baseFoot = makeSketchPart(new THREE.CylinderGeometry(0.26, 0.29, 0.32, 24), mats.inner, mats.lineInk, 24);
+      baseFoot.position.y = -1.01;
+      root.add(baseFoot);
+
+      // Exploded radial blueprint compass arcs around the mechanism
+      const draftRing1 = makeDraftCircle(0.68, mats.lineFaint, 64);
+      draftRing1.rotation.x = Math.PI / 2;
+      draftRing1.position.y = 0.16;
+      root.add(draftRing1);
+
+      const draftRing2 = makeDraftCircle(0.56, mats.lineBrass, 48);
+      draftRing2.rotation.x = Math.PI / 2;
+      draftRing2.position.y = -0.78;
+      root.add(draftRing2);
+
+      return rig;
+    }
+
+    // Matching invisible-fill sketchy 6-DOF robotic arm
+    function buildIndustrialArm6DOF(mats) {
+      const root = new THREE.Group();
+      const rig = { root };
+
+      root.add(makeSketchPart(new THREE.CylinderGeometry(0.26, 0.32, 0.14, 24), mats.inner, mats.lineInk, 24));
+
+      rig.turret = new THREE.Group();
+      rig.turret.position.y = 0.10;
+      root.add(rig.turret);
+      rig.turret.add(makeSketchPart(new THREE.CylinderGeometry(0.18, 0.21, 0.20, 24), mats.shell, mats.lineInk, 24));
+
+      rig.j1 = new THREE.Group();
+      rig.j1.position.y = 0.14;
+      rig.turret.add(rig.j1);
+
+      const boom1 = makeSketchPart(new THREE.CylinderGeometry(0.056, 0.072, 0.78, 16), mats.shell, mats.lineInk, 26);
+      boom1.position.y = 0.39;
+      rig.j1.add(boom1);
+
+      rig.j2 = new THREE.Group();
+      rig.j2.position.y = 0.78;
+      rig.j1.add(rig.j2);
+
+      const elbowServo = makeSketchPart(new THREE.CylinderGeometry(0.082, 0.082, 0.16, 20), mats.brass, mats.lineBrass, 24);
+      elbowServo.rotation.z = Math.PI / 2;
+      rig.j2.add(elbowServo);
+
+      const boom2 = makeSketchPart(new THREE.CylinderGeometry(0.044, 0.058, 0.70, 16), mats.shell, mats.lineInk, 26);
+      boom2.position.y = 0.35;
+      rig.j2.add(boom2);
+
+      rig.wrist = new THREE.Group();
+      rig.wrist.position.y = 0.70;
+      rig.j2.add(rig.wrist);
+      rig.wrist.add(makeSketchPart(new THREE.SphereGeometry(0.056, 14, 12), mats.inner, mats.lineInk, 26));
+
+      rig.jawL = makeSketchPart(new THREE.BoxGeometry(0.016, 0.14, 0.032), mats.shell, mats.lineInk, 20);
+      rig.jawL.position.set(-0.040, 0.10, 0);
+      rig.wrist.add(rig.jawL);
+
+      rig.jawR = makeSketchPart(new THREE.BoxGeometry(0.016, 0.14, 0.032), mats.shell, mats.lineInk, 20);
+      rig.jawR.position.set(0.040, 0.10, 0);
+      rig.wrist.add(rig.jawR);
+
+      return rig;
+    }
+
+    function initRobotics3D() {
+      try {
+        if (typeof THREE === 'undefined') return;
+        const rCanvas = document.getElementById('robotics-canvas');
+        rRenderer = new THREE.WebGLRenderer({ canvas: rCanvas, alpha: true, antialias: true });
+        rRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        rRenderer.setSize(window.innerWidth, window.innerHeight, false);
+
+        rScene = new THREE.Scene();
+        rCamera = new THREE.PerspectiveCamera(34, window.innerWidth / window.innerHeight, 0.1, 40);
+        rCamera.position.set(0, 0.28, 7.2);
+
+        const mats = createSketchMaterials();
+
+        // Right side: Realistic sculpted Tesla Optimus humanoid in invisible-fill sketch ink
+        humanoidRig = buildOptimusHumanoid(mats);
+        humanoidRig.root.position.set(2.35, -0.10, 0.20);
+        humanoidRig.root.rotation.y = -0.38;
+        humanoidRig.root.scale.setScalar(1.06);
+        rScene.add(humanoidRig.root);
+
+        // Left-center: Intricate moving Da Vinci lead-screw & meshing spur-gear machine sketch
+        gearRig = buildDaVinciGearMachine(mats);
+        gearRig.root.position.set(-2.35, 0.08, -0.20);
+        gearRig.root.rotation.set(0.24, 0.35, -0.06);
+        gearRig.root.scale.setScalar(0.95);
+        rScene.add(gearRig.root);
+
+        // Lower-left: Articulated 6-DOF sketched robotic arm
+        armRig = buildIndustrialArm6DOF(mats);
+        armRig.root.position.set(-3.10, -1.62, -0.85);
+        armRig.root.rotation.y = 0.48;
+        armRig.root.scale.setScalar(0.76);
+        rScene.add(armRig.root);
+
+        roboticsReady = true;
+      } catch (err) {
+        console.warn('3D Robotics init skipped:', err);
+      }
+    }
+
+    function resizeRobotics3D() {
+      if (!roboticsReady || !rRenderer || !rCamera) return;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      rCamera.aspect = w / h;
+      rCamera.updateProjectionMatrix();
+      rRenderer.setSize(w, h, false);
+
+      const spread = Math.min(2.45, Math.max(1.38, (w / h) * 1.38));
+      if (humanoidRig) humanoidRig.root.position.x = spread;
+      if (gearRig) gearRig.root.position.x = -spread * 0.98;
+      if (armRig) armRig.root.position.x = -spread * 1.24;
+    }
+
+    function updateRobotics3D(t) {
+      if (!roboticsReady || !rRenderer) return;
+      const rCanvas = document.getElementById('robotics-canvas');
+      if (!layers.robotics) {
+        rCanvas.style.opacity = '0';
+        return;
+      }
+      // Subtle ghostly sketch opacity matching the math/physics chalk drawings
+      rCanvas.style.opacity = String(Math.min(0.72, labOpacity * 0.68));
+
+      // Gentle 3D camera parallax
+      rCamera.position.x += (mouseNX * 0.34 - rCamera.position.x) * 0.04;
+      rCamera.position.y += (0.28 - mouseNY * 0.16 - rCamera.position.y) * 0.04;
+      rCamera.lookAt(0, -0.05, 0);
+
+      // ---- Animate Sketched Optimus Humanoid ----
+      if (humanoidRig) {
+        const g = t * 1.15;
+        const stride = Math.sin(g);
+        const oppStride = Math.sin(g + Math.PI);
+
+        humanoidRig.pelvis.position.y = -0.10 + Math.abs(Math.cos(g)) * 0.032;
+        humanoidRig.pelvis.rotation.y = stride * 0.05;
+        humanoidRig.torso.rotation.y = -stride * 0.08;
+        humanoidRig.torso.rotation.x = 0.03 + Math.sin(t * 0.9) * 0.015;
+        humanoidRig.root.rotation.y = -0.38 + Math.sin(t * 0.24) * 0.24;
+
+        humanoidRig.head.rotation.y = Math.sin(t * 0.55) * 0.24;
+        humanoidRig.head.rotation.x = Math.sin(t * 0.38) * 0.06;
+
+        humanoidRig.legL.hip.rotation.x = stride * 0.22;
+        humanoidRig.legL.knee.rotation.x = Math.max(0.04, -Math.cos(g) * 0.32 + 0.10);
+        humanoidRig.legL.ankle.rotation.x = -humanoidRig.legL.hip.rotation.x * 0.45;
+
+        humanoidRig.legR.hip.rotation.x = oppStride * 0.22;
+        humanoidRig.legR.knee.rotation.x = Math.max(0.04, -Math.cos(g + Math.PI) * 0.32 + 0.10);
+        humanoidRig.legR.ankle.rotation.x = -humanoidRig.legR.hip.rotation.x * 0.45;
+
+        const inspect = Math.max(0, Math.sin(t * 0.34));
+        humanoidRig.armR.shoulder.rotation.x = stride * 0.18;
+        humanoidRig.armR.shoulder.rotation.z = 0.06;
+        humanoidRig.armR.elbow.rotation.x = -0.22 - Math.max(0, -stride) * 0.22;
+
+        humanoidRig.armL.shoulder.rotation.x = oppStride * 0.15 * (1 - inspect) - inspect * 0.55;
+        humanoidRig.armL.shoulder.rotation.z = -0.06 - inspect * 0.12;
+        humanoidRig.armL.elbow.rotation.x = -0.22 - inspect * 0.78;
+        humanoidRig.armL.wrist.rotation.y = Math.sin(t * 1.25) * 0.42 * inspect;
+
+        humanoidRig.fingersL.forEach(f => {
+          const curl = 0.18 + 0.46 * (0.5 + 0.5 * Math.sin(t * 2.0 + f.idx * 0.5));
+          f.prox.rotation.x = -curl;
+          if (f.dist) f.dist.rotation.x = -curl * 0.8;
+        });
+        humanoidRig.fingersR.forEach(f => {
+          const curl = 0.14 + 0.24 * (0.5 + 0.5 * Math.sin(t * 1.5 + f.idx * 0.45));
+          f.prox.rotation.x = -curl;
+          if (f.dist) f.dist.rotation.x = -curl * 0.75;
+        });
+      }
+
+      // ---- Animate Da Vinci Lead-Screw & Meshing Spur-Gear Mechanism ----
+      if (gearRig) {
+        const spin = t * (0.38 + currentRpm * 0.28);
+        gearRig.screwGroup.rotation.y = spin * 1.6;
+        gearRig.mainGear.rotation.y = spin * 0.65;
+        gearRig.lowerGear.rotation.y = -spin * 0.85;
+        gearRig.pinion.rotation.y = -spin * 1.52;
+        gearRig.root.rotation.y = 0.35 + Math.sin(t * 0.22) * 0.16;
+      }
+
+      // ---- Animate Sketched 6-DOF Engineering Arm ----
+      if (armRig) {
+        armRig.turret.rotation.y = Math.sin(t * 0.40) * 0.75;
+        armRig.j1.rotation.z = -0.22 + Math.sin(t * 0.60) * 0.24;
+        armRig.j2.rotation.z = -0.82 + Math.cos(t * 0.68) * 0.38;
+        armRig.wrist.rotation.y = t * 0.85;
+        const grip = 0.030 + (0.5 + 0.5 * Math.sin(t * 1.5)) * 0.028;
+        armRig.jawL.position.x = -grip;
+        armRig.jawR.position.x = grip;
+      }
+
+      rRenderer.render(rScene, rCamera);
+    }
+
+    /*************************************************************************
+     * 3. REAL DEVELOPER CODE SNIPPETS (LIVE TYPING BEHIND ENGINE)
+     *************************************************************************/
+    const CODE_SNIPPETS = [
+      {
+        file: 'AeroPowerSolver.java',
+        lines: [
+          'public class AeroPowerSolver {',
+          '  static double watts(double v, double cda, double rho) {',
+          '    double drag = 0.5 * rho * cda * v * v;',
+          '    double roll = 0.0042 * 76.0 * 9.81;',
+          '    return (drag + roll) * v;',
+          '  }',
+          '}',
+          '[EXEC] v=12.5m/s (45kph) -> P = 341.8 W'
+        ]
+      },
+      {
+        file: 'RK4Physics.java',
+        lines: [
+          'double[] rk4Step(double t, double y, double v, double dt) {',
+          '  double k1v = -9.81 / L * Math.sin(y) - 0.12 * v;',
+          '  double k2v = -9.81 / L * Math.sin(y + 0.5 * dt * v);',
+          '  return new double[]{ y + dt * v, v + dt * k2v };',
+          '}',
+          '[EXEC] E_total = 4.905 J  |  drift < 1e-6'
+        ]
+      },
+      {
+        file: 'Dijkstra.java',
+        lines: [
+          'PriorityQueue<int[]> pq = new PriorityQueue<>(comparingInt(a -> a[1]));',
+          'pq.offer(new int[]{src, 0});',
+          'while (!pq.isEmpty()) {',
+          '  int[] cur = pq.poll();',
+          '  if (cur[1] > dist[cur[0]]) continue;',
+          '  for (Edge e : adj[cur[0]]) relax(cur, e, dist, pq);',
+          '}',
+          '[EXEC] shortest_path(0 -> 7) = 14.2 km (0.4ms)'
+        ]
+      },
+      {
+        file: 'kalman_1d.py',
+        lines: [
+          'def update(x, P, z, R=0.08, Q=0.004):',
+          '    P_pred = P + Q',
+          '    K = P_pred / (P_pred + R)',
+          '    return x + K * (z - x), (1 - K) * P_pred',
+          '# Filter GPS speed telemetry',
+          '[EXEC] v_est=42.84 kph  sigma=0.019'
+        ]
+      },
+      {
+        file: 'RingBuffer.cpp',
+        lines: [
+          'template <typename T, size_t N>',
+          'bool push(const T& item) noexcept {',
+          '  size_t next = (head + 1) & (N - 1);',
+          '  if (next == tail) return false;',
+          '  buf[head] = item; head = next; return true;',
+          '}',
+          '[EXEC] lock_free throughput: 48.2M ops/s'
+        ]
+      }
+    ];
+
+    let activeCodeIdx = 0;
+    let codeCharCount = 0;
+    let codeHoldTimer = 0;
+
+    function drawCodeBehindEngine(ctx, dt) {
+      if (!layers.code) return;
+      const snip = CODE_SNIPPETS[activeCodeIdx];
+      const fullText = snip.lines.join('\n');
+
+      if (codeCharCount < fullText.length) {
+        codeCharCount += dt * 34;
+      } else {
+        codeHoldTimer += dt;
+        if (codeHoldTimer > 5.5) {
+          codeHoldTimer = 0;
+          codeCharCount = 0;
+          activeCodeIdx = (activeCodeIdx + 1) % CODE_SNIPPETS.length;
+        }
+      }
+
+      const visible = fullText.slice(0, Math.floor(codeCharCount)).split('\n');
+      const x = Math.max(24, W * 0.045);
+      const y = H * 0.24;
+
+      ctx.save();
+      ctx.font = '11px "IBM Plex Mono", monospace';
+      ctx.fillStyle = `rgba(216, 164, 88, ${0.34 * labOpacity})`;
+      ctx.fillText(`// ${snip.file}`, x, y - 16);
+
+      visible.forEach((line, idx) => {
+        const isExec = line.startsWith('[EXEC]');
+        ctx.fillStyle = isExec
+          ? `rgba(216, 164, 88, ${0.42 * labOpacity})`
+          : `rgba(234, 228, 211, ${0.26 * labOpacity})`;
+        ctx.fillText(line, x, y + idx * 17);
+      });
+
+      // Subtle blinking cursor
+      if (Math.floor(performance.now() / 480) % 2 === 0) {
+        const lastLine = visible[visible.length - 1] || '';
+        const tw = ctx.measureText(lastLine).width;
+        ctx.fillStyle = `rgba(216, 164, 88, ${0.5 * labOpacity})`;
+        ctx.fillRect(x + tw + 3, y + (visible.length - 1) * 17 - 9, 5, 11);
+      }
+      ctx.restore();
+    }
+
+    /*************************************************************************
+     * 4. CHALK MATH GRAPHS & LIVE PHYSICS SIMULATIONS BEHIND ENGINE
+     *************************************************************************/
+    const MATH_SKETCHES = ['riemann', 'cubic', 'gaussian', 'polar'];
+    const PHYSICS_SIMS = ['pendulum', 'projectile', 'aero', 'kepler', 'standing'];
+
+    let mathSlot = { type: 'riemann', age: 0, dur: 15 };
+    let physSlot = { type: 'pendulum', age: 4, dur: 16 };
+
+    function randomizeLab() {
+      mathSlot = {
+        type: MATH_SKETCHES[Math.floor(Math.random() * MATH_SKETCHES.length)],
+        age: 0,
+        dur: 14 + Math.random() * 5
+      };
+      physSlot = {
+        type: PHYSICS_SIMS[Math.floor(Math.random() * PHYSICS_SIMS.length)],
+        age: 0,
+        dur: 14 + Math.random() * 5
+      };
+      activeCodeIdx = (activeCodeIdx + 1) % CODE_SNIPPETS.length;
+      codeCharCount = 0;
+      codeHoldTimer = 0;
+    }
+
+    function chalkAxes(ctx, x, y, w, h, alpha) {
+      ctx.strokeStyle = `rgba(234, 228, 211, ${0.24 * alpha})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, y + h);
+      ctx.lineTo(x + w, y + h);
+      ctx.moveTo(x, y + h);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
+
+    // Full-width oscillating harmonic & damped wave behind the jet engine
+    function drawFullWidthWaves(ctx, t) {
+      if (!layers.math) return;
+      const cy = H * 0.52;
+      const amp = Math.min(95, H * 0.13);
+
+      ctx.save();
+      // Primary harmonic wave
+      ctx.beginPath();
+      for (let x = 0; x <= W; x += 6) {
+        const nx = (x / W) * Math.PI * 4;
+        const y = cy +
+          Math.sin(nx - t * 0.85) * amp * 0.62 +
+          Math.sin(nx * 2.1 + t * 0.55) * amp * 0.24;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = `rgba(234, 228, 211, ${0.14 * labOpacity})`;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Secondary damped wave
+      ctx.beginPath();
+      for (let x = 0; x <= W; x += 6) {
+        const u = (x - W * 0.5) / (W * 0.42);
+        const env = Math.exp(-u * u * 1.4);
+        const y = cy + Math.cos(u * 11 + t * 1.15) * amp * 0.85 * env;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = `rgba(216, 164, 88, ${0.14 * labOpacity})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Moving dy/dx tangent point on primary wave
+      const px = ((t * 48) % (W * 0.72)) + W * 0.14;
+      const nx = (px / W) * Math.PI * 4;
+      const py = cy + Math.sin(nx - t * 0.85) * amp * 0.62 + Math.sin(nx * 2.1 + t * 0.55) * amp * 0.24;
+      const slope = (Math.cos(nx - t * 0.85) * amp * 0.62 * (Math.PI * 4 / W)) +
+                    (Math.cos(nx * 2.1 + t * 0.55) * amp * 0.24 * (Math.PI * 8.4 / W));
+
+      ctx.strokeStyle = `rgba(216, 164, 88, ${0.32 * labOpacity})`;
+      ctx.beginPath();
+      ctx.moveTo(px - 42, py - slope * 42);
+      ctx.lineTo(px + 42, py + slope * 42);
+      ctx.stroke();
+
+      ctx.fillStyle = `rgba(216, 164, 88, ${0.55 * labOpacity})`;
+      ctx.beginPath();
+      ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.font = '10px "IBM Plex Mono", monospace';
+      ctx.fillText(`dy/dx = ${slope.toFixed(2)}`, px + 8, py - 10);
+      ctx.restore();
+    }
+
+    function drawMathSketch(ctx, t, dt) {
+      if (!layers.math) return;
+      mathSlot.age += dt;
+      if (mathSlot.age > mathSlot.dur) {
+        mathSlot.age = 0;
+        mathSlot.type = MATH_SKETCHES[(MATH_SKETCHES.indexOf(mathSlot.type) + 1) % MATH_SKETCHES.length];
+      }
+      const fade = Math.min(1, mathSlot.age / 1.5, (mathSlot.dur - mathSlot.age) / 1.5);
+      const a = Math.max(0, fade) * labOpacity;
+
+      const x = Math.max(24, W * 0.048);
+      const y = H * 0.56;
+      const w = Math.min(220, W * 0.2);
+      const h = 110;
+
+      ctx.save();
+      ctx.font = '10px "IBM Plex Mono", monospace';
+      ctx.fillStyle = `rgba(234, 228, 211, ${0.34 * a})`;
+
+      if (mathSlot.type === 'riemann') {
+        chalkAxes(ctx, x, y, w, h, a);
+        const bars = 10;
+        for (let i = 0; i < bars; i++) {
+          const u = (i + 0.5) / bars;
+          const val = Math.sin(u * Math.PI) * (0.65 + 0.25 * Math.sin(t * 1.1 + i * 0.35));
+          const bh = Math.max(6, val * (h - 14));
+          ctx.strokeStyle = `rgba(216, 164, 88, ${0.26 * a})`;
+          ctx.strokeRect(x + i * (w / bars) + 2, y + h - bh, w / bars - 4, bh);
+        }
+        ctx.fillText('∫₀^π sin(x) dx ≈ Σ f(xᵢ)Δx', x, y - 10);
+      } else if (mathSlot.type === 'cubic') {
+        chalkAxes(ctx, x, y, w, h, a);
+        ctx.beginPath();
+        for (let i = 0; i <= w; i += 3) {
+          const u = (i / w) * 2 - 1;
+          const cy = y + h * 0.5 - (u * u * u - 0.6 * u * Math.cos(t * 0.7)) * (h * 0.42);
+          if (i === 0) ctx.moveTo(x + i, cy);
+          else ctx.lineTo(x + i, cy);
+        }
+        ctx.strokeStyle = `rgba(234, 228, 211, ${0.34 * a})`;
+        ctx.stroke();
+        ctx.fillText('f(x) = x³ - ax   f′(x) = 3x² - a', x, y - 10);
+      } else if (mathSlot.type === 'gaussian') {
+        chalkAxes(ctx, x, y, w, h, a);
+        const sigma = 0.22 + 0.08 * Math.sin(t * 0.8);
+        ctx.beginPath();
+        for (let i = 0; i <= w; i += 3) {
+          const u = (i / w) - 0.5;
+          const val = Math.exp(-(u * u) / (2 * sigma * sigma));
+          const py = y + h - val * (h - 14);
+          if (i === 0) ctx.moveTo(x + i, py);
+          else ctx.lineTo(x + i, py);
+        }
+        ctx.strokeStyle = `rgba(234, 228, 211, ${0.34 * a})`;
+        ctx.stroke();
+        ctx.fillText(`N(μ, σ²)  σ = ${sigma.toFixed(2)}`, x, y - 10);
+      } else {
+        const cx = x + w * 0.48, cy = y + h * 0.52, R = h * 0.44;
+        ctx.beginPath();
+        for (let th = 0; th <= Math.PI * 2; th += 0.04) {
+          const r = R * Math.cos(3 * th + t * 0.4);
+          const px = cx + r * Math.cos(th);
+          const py = cy + r * Math.sin(th);
+          if (th === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.strokeStyle = `rgba(216, 164, 88, ${0.32 * a})`;
+        ctx.stroke();
+        ctx.fillText('r(θ) = a·cos(3θ)', x, y - 10);
+      }
+      ctx.restore();
+    }
+
+    function drawPhysicsSim(ctx, t, dt) {
+      if (!layers.physics) return;
+      physSlot.age += dt;
+      if (physSlot.age > physSlot.dur) {
+        physSlot.age = 0;
+        physSlot.type = PHYSICS_SIMS[(PHYSICS_SIMS.indexOf(physSlot.type) + 1) % PHYSICS_SIMS.length];
+      }
+      const fade = Math.min(1, physSlot.age / 1.5, (physSlot.dur - physSlot.age) / 1.5);
+      const a = Math.max(0, fade) * labOpacity;
+
+      const w = Math.min(230, W * 0.22);
+      const x = W - w - Math.max(24, W * 0.048);
+      const y = H * 0.30;
+      const h = 130;
+
+      ctx.save();
+      ctx.font = '10px "IBM Plex Mono", monospace';
+      ctx.fillStyle = `rgba(234, 228, 211, ${0.34 * a})`;
+
+      if (physSlot.type === 'pendulum') {
+        const px = x + w * 0.5, py = y + 14;
+        const L = 86;
+        const theta = 0.62 * Math.cos(t * 2.1);
+        const bx = px + Math.sin(theta) * L;
+        const by = py + Math.cos(theta) * L;
+
+        ctx.strokeStyle = `rgba(234, 228, 211, ${0.22 * a})`;
+        ctx.beginPath();
+        ctx.moveTo(px - 24, py); ctx.lineTo(px + 24, py);
+        ctx.stroke();
+
+        ctx.strokeStyle = `rgba(234, 228, 211, ${0.36 * a})`;
+        ctx.beginPath();
+        ctx.moveTo(px, py); ctx.lineTo(bx, by);
+        ctx.stroke();
+
+        ctx.fillStyle = `rgba(216, 164, 88, ${0.52 * a})`;
+        ctx.beginPath();
+        ctx.arc(bx, by, 5.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = `rgba(234, 228, 211, ${0.34 * a})`;
+        ctx.fillText('F = -mg·sin(θ)', x + 12, y + h);
+        ctx.fillText(`θ = ${(theta * 57.3).toFixed(1)}°`, x + 12, y + h + 15);
+      } else if (physSlot.type === 'projectile') {
+        chalkAxes(ctx, x, y, w, h - 10, a);
+        const u = (t * 0.45) % 1;
+        ctx.beginPath();
+        for (let s = 0; s <= 1; s += 0.04) {
+          const px = x + s * (w - 10);
+          const py = y + (h - 10) - (4 * s * (1 - s)) * (h - 30);
+          if (s === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.strokeStyle = `rgba(234, 228, 211, ${0.22 * a})`;
+        ctx.setLineDash([3, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        const px = x + u * (w - 10);
+        const py = y + (h - 10) - (4 * u * (1 - u)) * (h - 30);
+        ctx.fillStyle = `rgba(216, 164, 88, ${0.55 * a})`;
+        ctx.beginPath();
+        ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Velocity vectors vx, vy
+        ctx.strokeStyle = `rgba(216, 164, 88, ${0.42 * a})`;
+        ctx.beginPath();
+        ctx.moveTo(px, py); ctx.lineTo(px + 22, py);
+        ctx.moveTo(px, py); ctx.lineTo(px, py - (1 - 2 * u) * 24);
+        ctx.stroke();
+
+        ctx.fillStyle = `rgba(234, 228, 211, ${0.34 * a})`;
+        ctx.fillText('y(t) = v₀y·t - ½gt²', x, y - 10);
+      } else if (physSlot.type === 'aero') {
+        const cx = x + w * 0.5, cy = y + h * 0.5;
+        // Airfoil / aero body
+        ctx.strokeStyle = `rgba(234, 228, 211, ${0.36 * a})`;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, 40, 12, -0.1, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Force vectors: Lift, Drag, Thrust, Weight
+        ctx.strokeStyle = `rgba(216, 164, 88, ${0.42 * a})`;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - 42); // Lift
+        ctx.moveTo(cx, cy); ctx.lineTo(cx + 50, cy); // Thrust
+        ctx.moveTo(cx, cy); ctx.lineTo(cx - 38, cy); // Drag
+        ctx.stroke();
+
+        ctx.fillText('L = ½ρv²SC_L', cx - 28, cy - 48);
+        ctx.fillText('F_d = ½ρC_dAv²', x + 10, y + h);
+      } else if (physSlot.type === 'kepler') {
+        const cx = x + w * 0.5, cy = y + h * 0.5;
+        const rx = 74, ry = 42;
+        ctx.strokeStyle = `rgba(234, 228, 211, ${0.24 * a})`;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        const fx = cx - 28, fy = cy;
+        ctx.fillStyle = `rgba(216, 164, 88, ${0.5 * a})`;
+        ctx.beginPath();
+        ctx.arc(fx, fy, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        const ang = t * 1.1;
+        const px = cx + Math.cos(ang) * rx;
+        const py = cy + Math.sin(ang) * ry;
+        ctx.beginPath();
+        ctx.moveTo(fx, fy); ctx.lineTo(px, py);
+        ctx.strokeStyle = `rgba(216, 164, 88, ${0.28 * a})`;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(px, py, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = `rgba(234, 228, 211, ${0.34 * a})`;
+        ctx.fillText('dA/dt = L / 2m = const', x + 12, y + h);
+      } else {
+        // Standing wave harmonics
+        const cy = y + h * 0.5;
+        ctx.beginPath();
+        for (let i = 0; i <= w; i += 3) {
+          const u = i / w;
+          const py = cy + Math.sin(u * Math.PI * 3) * Math.cos(t * 3.2) * 32;
+          if (i === 0) ctx.moveTo(x + i, py);
+          else ctx.lineTo(x + i, py);
+        }
+        ctx.strokeStyle = `rgba(216, 164, 88, ${0.38 * a})`;
+        ctx.stroke();
+        ctx.fillText('λ = 2L / n   v = fλ', x + 12, y + h);
+      }
+      ctx.restore();
+    }
+
+    function drawSnow(ctx, dt) {
+      if (!layers.snow) return;
+      ctx.save();
+      for (let i = 0; i < snowParticles.length; i++) {
+        const p = snowParticles[i];
+        p.x += (p.vx + Math.sin(performance.now() * 0.001 + p.phase) * 6 + mouseNX * 8) * dt;
+        p.y += (p.vy + mouseNY * 4) * dt;
+        if (p.x < -8) p.x = W + 8;
+        if (p.x > W + 8) p.x = -8;
+        if (p.y > H + 8) { p.y = -8; p.x = Math.random() * W; }
+
+        ctx.fillStyle = `rgba(234, 228, 211, ${p.alpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    /*************************************************************************
+     * 5. FIXED CENTERPIECE BLUEPRINT JET ENGINE CANVAS
+     *************************************************************************/
+    let rotorAngle = 0;
+
+    function drawJetEngine(ctx, dt) {
+      ctx.clearRect(0, 0, W, H);
+      currentRpm += (targetRpm - currentRpm) * Math.min(1, dt * 2.5);
+      rotorAngle += dt * (1.2 + currentRpm * 4.4);
+
+      const cx = W * 0.5;
+      const cy = H * 0.54;
+      const R = Math.min(W, H) * 0.255;
+
+      ctx.save();
+      ctx.translate(cx, cy);
+
+      // Subtle compass / protractor degree ring outside casing
+      ctx.strokeStyle = 'rgba(234, 228, 211, 0.11)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(0, 0, R * 1.18, 0, Math.PI * 2);
+      ctx.stroke();
+
+      for (let deg = 0; deg < 360; deg += 15) {
+        const rad = (deg * Math.PI) / 180;
+        const len = deg % 45 === 0 ? 9 : 4;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(rad) * (R * 1.18), Math.sin(rad) * (R * 1.18));
+        ctx.lineTo(Math.cos(rad) * (R * 1.18 + len), Math.sin(rad) * (R * 1.18 + len));
+        ctx.stroke();
+      }
+
+      // Semi-translucent dark core so math waves & code peek through behind blades
+      const coreGrad = ctx.createRadialGradient(0, 0, R * 0.12, 0, 0, R * 1.02);
+      coreGrad.addColorStop(0, 'rgba(13, 17, 22, 0.52)');
+      coreGrad.addColorStop(0.75, 'rgba(17, 21, 26, 0.36)');
+      coreGrad.addColorStop(1, 'rgba(17, 21, 26, 0.05)');
+      ctx.fillStyle = coreGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, R * 1.02, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Outer nacelle rings
+      ctx.strokeStyle = 'rgba(234, 228, 211, 0.34)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(0, 0, R, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(216, 164, 88, 0.26)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(0, 0, R * 0.94, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Counter-rotating subtle stator vanes in back
+      ctx.save();
+      ctx.rotate(-rotorAngle * 0.15);
+      ctx.strokeStyle = 'rgba(234, 228, 211, 0.11)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 18; i++) {
+        const a = (i / 18) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * R * 0.26, Math.sin(a) * R * 0.26);
+        ctx.lineTo(Math.cos(a + 0.15) * R * 0.92, Math.sin(a + 0.15) * R * 0.92);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Primary spinning swept turbofan blades
+      const blades = 24;
+      ctx.save();
+      ctx.rotate(rotorAngle);
+
+      for (let i = 0; i < blades; i++) {
+        const a = (i / blades) * Math.PI * 2;
+        ctx.save();
+        ctx.rotate(a);
+
+        // Swept blade polygon
+        ctx.beginPath();
+        ctx.moveTo(R * 0.22, -3);
+        ctx.quadraticCurveTo(R * 0.56, -12, R * 0.92, -6);
+        ctx.lineTo(R * 0.92, 5);
+        ctx.quadraticCurveTo(R * 0.56, -2, R * 0.22, 4);
+        ctx.closePath();
+
+        ctx.fillStyle = 'rgba(234, 228, 211, 0.08)';
+        ctx.fill();
+        ctx.strokeStyle = i % 6 === 0
+          ? 'rgba(216, 164, 88, 0.42)'
+          : 'rgba(234, 228, 211, 0.26)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      // Spinner hub & spiral paint mark
+      ctx.fillStyle = 'rgba(17, 21, 26, 0.85)';
+      ctx.strokeStyle = 'rgba(234, 228, 211, 0.46)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(0, 0, R * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Classic jet spinner spiral
+      ctx.strokeStyle = 'rgba(216, 164, 88, 0.72)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      for (let s = 0; s < 26; s++) {
+        const frac = s / 25;
+        const r = frac * R * 0.17;
+        const ang = frac * Math.PI * 2.4;
+        const px = Math.cos(ang) * r;
+        const py = Math.sin(ang) * r;
+        if (s === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      // Faint blueprint callout ticks
+      ctx.font = '9px "IBM Plex Mono", monospace';
+      ctx.fillStyle = 'rgba(234, 228, 211, 0.35)';
+      ctx.strokeStyle = 'rgba(234, 228, 211, 0.2)';
+      ctx.lineWidth = 1;
+
+      const callouts = [
+        { ang: -0.65, label: 'INTAKE' },
+        { ang: 0.55,  label: 'STATOR' },
+        { ang: 2.55,  label: 'JET ENGINE' },
+        { ang: -2.45, label: 'EXHAUST' }
+      ];
+      callouts.forEach(c => {
+        const x1 = Math.cos(c.ang) * (R * 1.03);
+        const y1 = Math.sin(c.ang) * (R * 1.03);
+        const x2 = Math.cos(c.ang) * (R * 1.24);
+        const y2 = Math.sin(c.ang) * (R * 1.24);
+        const dir = x2 >= 0 ? 1 : -1;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.lineTo(x2 + dir * 24, y2);
+        ctx.stroke();
+        ctx.textAlign = dir > 0 ? 'left' : 'right';
+        ctx.fillText(c.label, x2 + dir * 28, y2 + 3);
+      });
+
+      ctx.restore();
+    }
+
+    /*************************************************************************
+     * 6. PROCEDURAL JET TURBINE + WARM LO-FI RHODES AUDIO ENGINE
+     *************************************************************************/
+    class AmbientSoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.playing = false;
+        this.jetVol = 0.55;
+        this.lofiVol = 0.45;
+        this.lofiDucked = false;
+        this.timer = null;
+        this.chordIdx = 0;
+      }
+
+      init() {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AC();
+
+        this.master = this.ctx.createGain();
+        this.master.gain.value = 0.0001;
+        this.master.connect(this.ctx.destination);
+
+        // Jet bus
+        this.jetBus = this.ctx.createGain();
+        this.jetBus.gain.value = this.jetVol;
+        this.jetBus.connect(this.master);
+
+        // Lo-Fi bus
+        this.lofiBus = this.ctx.createGain();
+        this.lofiBus.gain.value = this.lofiVol;
+        this.lofiBus.connect(this.master);
+
+        // Pink noise buffer for jet airflow rumble
+        const len = this.ctx.sampleRate * 3;
+        const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        let b0 = 0, b1 = 0, b2 = 0;
+        for (let i = 0; i < len; i++) {
+          const w = Math.random() * 2 - 1;
+          b0 = 0.997 * b0 + w * 0.029;
+          b1 = 0.985 * b1 + w * 0.032;
+          b2 = 0.950 * b2 + w * 0.048;
+          d[i] = (b0 + b1 + b2 + w * 0.015) * 0.6;
+        }
+
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buf;
+        noise.loop = true;
+
+        this.jetFilter = this.ctx.createBiquadFilter();
+        this.jetFilter.type = 'lowpass';
+        this.jetFilter.frequency.value = 340;
+        this.jetFilter.Q.value = 1.2;
+
+        noise.connect(this.jetFilter);
+        this.jetFilter.connect(this.jetBus);
+        noise.start();
+
+        // Subtle turbine whine harmonic
+        this.turbineOsc = this.ctx.createOscillator();
+        this.turbineOsc.type = 'sine';
+        this.turbineOsc.frequency.value = 118;
+        this.turbineGain = this.ctx.createGain();
+        this.turbineGain.gain.value = 0.035;
+        this.turbineOsc.connect(this.turbineGain);
+        this.turbineGain.connect(this.jetBus);
+        this.turbineOsc.start();
+      }
+
+      updateThrottle(rpm) {
+        if (!this.ctx || !this.playing) return;
+        const now = this.ctx.currentTime;
+        this.jetFilter.frequency.setTargetAtTime(220 + rpm * 260, now, 0.3);
+        this.turbineOsc.frequency.setTargetAtTime(86 + rpm * 68, now, 0.3);
+        this.turbineGain.gain.setTargetAtTime(0.02 + rpm * 0.025, now, 0.3);
+      }
+
+      playChord() {
+        if (!this.ctx || !this.playing || this.lofiDucked || this.lofiVol <= 0.01) return;
+        const chords = [
+          [174.61, 220.00, 261.63, 329.63], // Fmaj7
+          [164.81, 196.00, 246.94, 293.66], // Em7
+          [146.83, 174.61, 220.00, 261.63], // Dm7
+          [130.81, 196.00, 246.94, 293.66]  // Cmaj9
+        ];
+        const notes = chords[this.chordIdx % chords.length];
+        this.chordIdx++;
+        const now = this.ctx.currentTime;
+
+        notes.forEach((freq, i) => {
+          const osc = this.ctx.createOscillator();
+          const filter = this.ctx.createBiquadFilter();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.value = freq;
+          filter.type = 'lowpass';
+          filter.frequency.value = 680;
+
+          const start = now + i * 0.04;
+          gain.gain.setValueAtTime(0.0001, start);
+          gain.gain.linearRampToValueAtTime(0.045, start + 0.14);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + 4.4);
+
+          osc.connect(filter);
+          filter.connect(gain);
+          gain.connect(this.lofiBus);
+          osc.start(start);
+          osc.stop(start + 4.5);
+        });
+      }
+
+      startLoop() {
+        clearInterval(this.timer);
+        this.playChord();
+        this.timer = setInterval(() => this.playChord(), 4600);
+      }
+
+      async start() {
+        try {
+          if (!this.ctx) this.init();
+          if (this.ctx.state === 'suspended') {
+            await this.ctx.resume().catch(() => {});
+          }
+          if (!this.playing) {
+            this.playing = true;
+            const now = this.ctx.currentTime;
+            this.master.gain.cancelScheduledValues(now);
+            this.master.gain.setTargetAtTime(0.85, now, 0.4);
+            this.startLoop();
+          }
+          return this.playing;
+        } catch (err) {
+          console.error('Audio init failed:', err);
+          return false;
+        }
+      }
+
+      stop() {
+        if (!this.ctx) return false;
+        this.playing = false;
+        clearInterval(this.timer);
+        const now = this.ctx.currentTime;
+        this.master.gain.cancelScheduledValues(now);
+        this.master.gain.setTargetAtTime(0.0001, now, 0.25);
+        return false;
+      }
+
+      setJetVol(v) {
+        this.jetVol = v;
+        if (this.jetBus && this.ctx) this.jetBus.gain.setTargetAtTime(v, this.ctx.currentTime, 0.1);
+      }
+
+      setLofiVol(v) {
+        this.lofiVol = v;
+        if (this.lofiBus && this.ctx && !this.lofiDucked) {
+          this.lofiBus.gain.setTargetAtTime(v, this.ctx.currentTime, 0.1);
+        }
+      }
+
+      setLofiDucked(duck) {
+        this.lofiDucked = duck;
+        if (this.lofiBus && this.ctx) {
+          this.lofiBus.gain.setTargetAtTime(duck ? 0.0001 : this.lofiVol, this.ctx.currentTime, 0.15);
+        }
+      }
+    }
+
+    const sound = new AmbientSoundEngine();
+    let userDisabledAudio = false;
+
+    function syncAudioUI(on) {
+      document.getElementById('audioDot').className = on
+        ? 'w-1.5 h-1.5 rounded-full bg-[#d8a458] shadow-[0_0_8px_rgba(216,164,88,0.8)] transition'
+        : 'w-1.5 h-1.5 rounded-full bg-[#eae4d3]/30 transition';
+      document.getElementById('audioToggleBtn').classList.toggle('active', on);
+    }
+
+    async function enableJetAudioOnLoad() {
+      if (userDisabledAudio) return;
+      const on = await sound.start();
+      syncAudioUI(on);
+
+      // Wake AudioContext on first user gesture if browser pauses autoplay
+      if (sound.ctx && sound.ctx.state === 'suspended') {
+        const unlock = async (e) => {
+          if (e.target && e.target.closest && e.target.closest('#audioToggleBtn')) return;
+          if (userDisabledAudio) return;
+          await sound.ctx.resume().catch(() => {});
+          if (sound.ctx.state === 'running') {
+            syncAudioUI(sound.playing);
+            window.removeEventListener('pointerdown', unlock, true);
+            window.removeEventListener('keydown', unlock, true);
+          }
+        };
+        window.addEventListener('pointerdown', unlock, true);
+        window.addEventListener('keydown', unlock, true);
+      }
+    }
+
+    /*************************************************************************
+     * 7. CLOCK, COUNTDOWN & TODAY'S PLAN SHELF
+     *************************************************************************/
+    function updateClockAndCountdown() {
+      const now = new Date();
+      document.getElementById('lockDate').textContent = now.toLocaleDateString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric'
+      });
+      let h = now.getHours() % 12;
+      if (h === 0) h = 12;
+      const m = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('lockClock').textContent = `${h}:${m}`;
+
+      const target = milestones[activeMilestoneIdx % milestones.length];
+      const diff = new Date(target.date).getTime() - now.getTime();
+      if (diff <= 0) {
+        document.getElementById('countdownText').textContent = `${target.label} · RACE DAY`;
+      } else {
+        const d = Math.floor(diff / 86400000);
+        const hr = Math.floor((diff % 86400000) / 3600000);
+        const mn = Math.floor((diff % 3600000) / 60000);
+        const sc = Math.floor((diff % 60000) / 1000);
+        document.getElementById('countdownText').textContent =
+          `${target.label} · ${d}d ${String(hr).padStart(2, '0')}h ${String(mn).padStart(2, '0')}m ${String(sc).padStart(2, '0')}s`;
+      }
+    }
+
+    const PLAN_COLS = [
+      { key: 'running', title: 'Running' },
+      { key: 'biking',  title: 'Biking' },
+      { key: 'finals',  title: 'Prepare for Finals' }
+    ];
+
+    function renderPlan() {
+      const grid = document.getElementById('planGrid');
+      grid.innerHTML = '';
+
+      let totalDone = 0;
+      let totalCount = 0;
+
+      PLAN_COLS.forEach((col, colIdx) => {
+        const items = planData[col.key] || [];
+        totalDone += items.filter(i => i.done).length;
+        totalCount += items.length;
+
+        const wrap = document.createElement('div');
+        wrap.className = `flex flex-col ${colIdx > 0 ? 'md:pl-3.5' : ''}`;
+
+        const head = document.createElement('div');
+        head.className = 'flex items-center justify-between mb-2 pb-1 border-b border-white/10';
+        head.innerHTML = `
+          <span class="text-xs font-medium tracking-wide text-[#eae4d3]">${col.title}</span>
+          <span class="mono text-[10px] text-[#eae4d3]/45">${items.filter(i => i.done).length}/${items.length}</span>
+        `;
+        wrap.appendChild(head);
+
+        const list = document.createElement('div');
+        list.className = 'space-y-1.5 max-h-24 overflow-y-auto pr-1';
+        items.forEach((item, idx) => {
+          const row = document.createElement('div');
+          row.className = 'group flex items-center gap-2 text-xs py-0.5 rounded-md hover:bg-white/[0.04] px-1 -mx-1 transition';
+
+          const cb = document.createElement('button');
+          cb.className = `w-3.5 h-3.5 rounded flex-shrink-0 border flex items-center justify-center transition cursor-pointer ${
+            item.done ? 'bg-[#d8a458] border-[#d8a458] text-[#11151a]' : 'border-white/30 hover:border-white/70'
+          }`;
+          cb.textContent = item.done ? '✓' : '';
+          cb.style.fontSize = '9px';
+          cb.onclick = () => {
+            planData[col.key][idx].done = !item.done;
+            saveJSON('aero_plan_v3', planData);
+            renderPlan();
+          };
+
+          const text = document.createElement('span');
+          text.className = `flex-1 truncate ${item.done ? 'line-through text-[#eae4d3]/40' : 'text-[#eae4d3]/85'}`;
+          text.textContent = item.text;
+
+          const del = document.createElement('button');
+          del.className = 'opacity-0 group-hover:opacity-100 text-[#eae4d3]/45 hover:text-[#eae4d3] transition cursor-pointer';
+          del.textContent = '×';
+          del.onclick = () => {
+            planData[col.key].splice(idx, 1);
+            saveJSON('aero_plan_v3', planData);
+            renderPlan();
+          };
+
+          row.append(cb, text, del);
+          list.appendChild(row);
+        });
+        wrap.appendChild(list);
+
+        const form = document.createElement('form');
+        form.className = 'mt-2 flex';
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.placeholder = `+ Add ${col.title.toLowerCase()}...`;
+        inp.className = 'w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-[11px] text-[#eae4d3] placeholder-[#eae4d3]/35 focus:outline-none focus:border-[#d8a458]/50';
+        form.appendChild(inp);
+        form.onsubmit = (e) => {
+          e.preventDefault();
+          const val = inp.value.trim();
+          if (!val) return;
+          planData[col.key].push({ text: val, done: false });
+          saveJSON('aero_plan_v3', planData);
+          renderPlan();
+        };
+        wrap.appendChild(form);
+        grid.appendChild(wrap);
+      });
+
+      const progressEl = document.getElementById('planTotalProgress');
+      if (progressEl) {
+        progressEl.textContent = `${totalDone}/${totalCount} DONE`;
+      }
+    }
+
+    /*************************************************************************
+     * 8. POPOVERS, SPOTIFY MINI-PLAYER & CONTROLS
+     *************************************************************************/
+    const spotifyPopover = document.getElementById('spotifyPopover');
+    const settingsPopover = document.getElementById('settingsPopover');
+    const dateEditorPopover = document.getElementById('dateEditorPopover');
+
+    function closeAllPopovers(except = null) {
+      [spotifyPopover, settingsPopover, dateEditorPopover].forEach(p => {
+        if (p && p !== except) p.classList.add('hidden');
+      });
+      if (except !== spotifyPopover) {
+        document.getElementById('spotifyBtn').classList.remove('active');
+      }
+    }
+
+    // Audio toggle button
+    document.getElementById('audioToggleBtn').addEventListener('click', async () => {
+      if (sound.playing) {
+        userDisabledAudio = true;
+        sound.stop();
+        syncAudioUI(false);
+        whisper('Jet engine & audio muted');
+      } else {
+        userDisabledAudio = false;
+        const on = await sound.start();
+        syncAudioUI(on);
+        whisper('Jet engine & lo-fi active');
+      }
+    });
+
+    // Curated Spotify track catalog
+    const SPOTIFY_CATALOG = {
+      focus: {
+        tracks: [
+          { id: '0VjIjW4GlUZAMYd2vXMi3b', title: 'Blinding Lights', artist: 'The Weeknd', dur: '3:20' },
+          { id: '7MXVkk9YMctZqd1Srtv4MB', title: 'Starboy', artist: 'The Weeknd, Daft Punk', dur: '3:50' },
+          { id: '2Fxmhks0bxGSBdJ92vM42m', title: 'bad guy', artist: 'Billie Eilish', dur: '3:14' },
+          { id: '3n3Ppam7vgaVa1iaRUc9Lp', title: 'Mr. Brightside', artist: 'The Killers', dur: '3:42' }
+        ]
+      },
+      synth: {
+        tracks: [
+          { id: '0oks4FnzhNp5QPTZtoet7c', title: 'Nightcall', artist: 'Kavinsky', dur: '4:18' },
+          { id: '5W3cjX2J3tjhG8zb6u0qHn', title: 'Instant Crush', artist: 'Daft Punk, Julian Casablancas', dur: '5:37' },
+          { id: '6b8Be6ljOzmkOmFslEb23P', title: 'Midnight City', artist: 'M83', dur: '4:03' },
+          { id: '2cGxRwrMyEAp8dEbuZaVv6', title: 'Resonance', artist: 'HOME', dur: '3:32' }
+        ]
+      },
+      lofi: {
+        tracks: [
+          { id: '1dGr1c8CrMLDpV6mPbImSI', title: 'Lover', artist: 'Taylor Swift', dur: '3:41' },
+          { id: '6habFhsOp2NvshLv26DqMb', title: 'Snowman', artist: 'Sia', dur: '2:45' },
+          { id: '2LBqCSwhJGcFQeTHMVGwy3', title: 'Die For You', artist: 'The Weeknd', dur: '4:20' },
+          { id: '4Dvkj6JhhA12EX05fT7y2e', title: 'As It Was', artist: 'Harry Styles', dur: '2:47' }
+        ]
+      }
+    };
+
+    let activeSpCat = 'focus';
+    let activeSpTrackId = SPOTIFY_CATALOG.focus.tracks[0].id;
+    let customSyncedTracks = null;
+
+    function renderSpotifyTrackList() {
+      const list = document.getElementById('spotifyTrackList');
+      if (!list) return;
+      list.innerHTML = '';
+      const tracks = customSyncedTracks || SPOTIFY_CATALOG[activeSpCat].tracks;
+      tracks.forEach(tr => {
+        const isCurrent = tr.id === activeSpTrackId;
+        const btn = document.createElement('button');
+        btn.className = `w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg text-left transition cursor-pointer ${
+          isCurrent ? 'bg-[#1DB954]/15 text-[#eae4d3]' : 'hover:bg-white/5 text-[#eae4d3]/75'
+        }`;
+        btn.innerHTML = `
+          <div class="min-w-0 flex-1">
+            <div class="truncate text-[11px] ${isCurrent ? 'text-[#1DB954] font-medium' : ''}">${tr.title}</div>
+            <div class="truncate text-[9px] text-[#eae4d3]/45">${tr.artist}</div>
+          </div>
+          ${isCurrent
+            ? '<div class="flex items-end gap-0.5 h-2.5"><span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span></div>'
+            : `<span class="mono text-[9px] text-[#eae4d3]/40">${tr.dur}</span>`}
+        `;
+        btn.onclick = () => selectSpotifyTrack(tr.id, true);
+        list.appendChild(btn);
+      });
+    }
+
+    function selectSpotifyTrack(trackId, notify = false) {
+      activeSpTrackId = trackId;
+      const iframe = document.getElementById('spotifyIframe');
+      if (iframe) {
+        iframe.src = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0`;
+      }
+      saveJSON('aero_spotify_track_v4', { cat: activeSpCat, id: trackId });
+      renderSpotifyTrackList();
+      if (notify) whisper('Track loaded in Spotify player');
+    }
+
+    function loadSpotifyUrl(rawUrl, notify = false) {
+      const match = rawUrl.match(/spotify\.com\/(track|playlist|album|episode)\/([a-zA-Z0-9]+)/);
+      if (!match) {
+        whisper('Paste a valid Spotify track or playlist link');
+        return;
+      }
+      const [, type, id] = match;
+      const iframe = document.getElementById('spotifyIframe');
+      if (iframe) {
+        iframe.src = `https://open.spotify.com/embed/${type}/${id}?utm_source=generator&theme=0`;
+      }
+      if (type === 'track') {
+        activeSpTrackId = id;
+        renderSpotifyTrackList();
+      }
+      if (notify) whisper('Loaded custom Spotify link');
+    }
+
+    async function startSpotifyPKCE(clientId) {
+      try {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const verifier = Array.from(crypto.getRandomValues(new Uint8Array(64)), b => chars[b % chars.length]).join('');
+        const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+        const challenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
+          .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        localStorage.setItem('sp_client_id', clientId);
+        localStorage.setItem('sp_pkce_verifier', verifier);
+        const redirectUri = window.location.origin + window.location.pathname;
+        const authUrl = `https://accounts.spotify.com/authorize?` + new URLSearchParams({
+          client_id: clientId,
+          response_type: 'code',
+          redirect_uri: redirectUri,
+          scope: 'user-read-private user-top-read',
+          code_challenge_method: 'S256',
+          code_challenge: challenge
+        });
+        window.location.href = authUrl;
+      } catch {
+        whisper('Could not start Spotify PKCE flow');
+      }
+    }
+
+    async function handleSpotifyOAuthCallback() {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      const clientId = localStorage.getItem('sp_client_id');
+      const verifier = localStorage.getItem('sp_pkce_verifier');
+      if (!code || !clientId || !verifier) return;
+
+      try {
+        const redirectUri = window.location.origin + window.location.pathname;
+        const res = await fetch('https://accounts.spotify.com/api/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            client_id: clientId,
+            grant_type: 'authorization_code',
+            code,
+            redirect_uri: redirectUri,
+            code_verifier: verifier
+          })
+        });
+        const tok = await res.json();
+        if (tok.access_token) {
+          localStorage.setItem('sp_access_token', tok.access_token);
+          window.history.replaceState({}, document.title, window.location.pathname);
+          await hydrateSpotifyUserLibrary(tok.access_token);
+        }
+      } catch {}
+    }
+
+    async function hydrateSpotifyUserLibrary(token) {
+      try {
+        const [meRes, topRes] = await Promise.all([
+          fetch('https://api.spotify.com/v1/me', { headers: { Authorization: `Bearer ${token}` } }),
+          fetch('https://api.spotify.com/v1/me/top/tracks?limit=8', { headers: { Authorization: `Bearer ${token}` } })
+        ]);
+        if (!meRes.ok) return;
+        const me = await meRes.json();
+        const badge = document.getElementById('spotifyUserBadge');
+        badge.textContent = me.display_name || 'Connected';
+        badge.classList.remove('hidden');
+        document.getElementById('spotifyLogoutBtn').classList.remove('hidden');
+        document.getElementById('spotifyLoginToggleBtn').textContent = 'Account';
+
+        if (topRes.ok) {
+          const top = await topRes.json();
+          if (top.items && top.items.length) {
+            customSyncedTracks = top.items.map(t => {
+              const mins = Math.floor(t.duration_ms / 60000);
+              const secs = String(Math.floor((t.duration_ms % 60000) / 1000)).padStart(2, '0');
+              return {
+                id: t.id,
+                title: t.name,
+                artist: t.artists.map(a => a.name).join(', '),
+                dur: `${mins}:${secs}`
+              };
+            });
+            selectSpotifyTrack(customSyncedTracks[0].id, false);
+          }
+        }
+      } catch {}
+    }
+
+    document.getElementById('spotifyBtn').addEventListener('click', () => {
+      const willOpen = spotifyPopover.classList.contains('hidden');
+      closeAllPopovers(willOpen ? spotifyPopover : null);
+      spotifyPopover.classList.toggle('hidden', !willOpen);
+      document.getElementById('spotifyBtn').classList.toggle('active', willOpen);
+    });
+    document.getElementById('closeSpotifyBtn').addEventListener('click', () => closeAllPopovers());
+
+    document.getElementById('spotifyLoginToggleBtn').addEventListener('click', () => {
+      document.getElementById('spotifyLoginPanel').classList.toggle('hidden');
+    });
+
+    document.getElementById('spotifyOAuthForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const cid = document.getElementById('spotifyClientIdInput').value.trim();
+      if (!cid) {
+        whisper('Enter a Spotify Client ID or click Sign in ↗');
+        return;
+      }
+      startSpotifyPKCE(cid);
+    });
+
+    document.getElementById('spotifyLogoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('sp_access_token');
+      customSyncedTracks = null;
+      document.getElementById('spotifyUserBadge').classList.add('hidden');
+      document.getElementById('spotifyLogoutBtn').classList.add('hidden');
+      document.getElementById('spotifyLoginToggleBtn').textContent = 'Log in';
+      renderSpotifyTrackList();
+      whisper('Spotify account disconnected');
+    });
+
+    document.querySelectorAll('.sp-cat-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        customSyncedTracks = null;
+        activeSpCat = btn.dataset.spCat;
+        document.querySelectorAll('.sp-cat-btn').forEach(b => {
+          const on = b.dataset.spCat === activeSpCat;
+          b.className = on
+            ? 'sp-cat-btn py-1 rounded-lg bg-[#1DB954]/20 text-[#1DB954] text-[10px] font-medium transition cursor-pointer'
+            : 'sp-cat-btn py-1 rounded-lg bg-white/5 hover:bg-white/10 text-[#eae4d3]/75 text-[10px] font-medium transition cursor-pointer';
+        });
+        selectSpotifyTrack(SPOTIFY_CATALOG[activeSpCat].tracks[0].id, false);
+      });
+    });
+
+    document.getElementById('spotifyUrlForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const inp = document.getElementById('spotifyUrlInput');
+      if (inp.value.trim()) {
+        loadSpotifyUrl(inp.value.trim(), true);
+        inp.value = '';
+      }
+    });
+
+    document.getElementById('duckLofiBtn').addEventListener('click', () => {
+      const next = !sound.lofiDucked;
+      sound.setLofiDucked(next);
+      document.getElementById('duckLofiBtn').textContent = next
+        ? 'Restore Lo-Fi Rhodes'
+        : 'Mute Lo-Fi (Keep Jet Engine)';
+      whisper(next ? 'Lo-Fi muted — Jet engine stays on' : 'Lo-Fi Rhodes restored');
+    });
+
+    // Init Spotify state
+    const savedSpTrack = loadJSON('aero_spotify_track_v4', null);
+    if (savedSpTrack && savedSpTrack.cat && SPOTIFY_CATALOG[savedSpTrack.cat]) {
+      activeSpCat = savedSpTrack.cat;
+      activeSpTrackId = savedSpTrack.id || SPOTIFY_CATALOG[activeSpCat].tracks[0].id;
+    }
+    selectSpotifyTrack(activeSpTrackId, false);
+    handleSpotifyOAuthCallback();
+    const existingSpToken = localStorage.getItem('sp_access_token');
+    if (existingSpToken) hydrateSpotifyUserLibrary(existingSpToken);
+
+    // Settings popover
+    document.getElementById('settingsBtn').addEventListener('click', () => {
+      const willOpen = settingsPopover.classList.contains('hidden');
+      closeAllPopovers(willOpen ? settingsPopover : null);
+      settingsPopover.classList.toggle('hidden', !willOpen);
+    });
+    document.getElementById('closeSettingsBtn').addEventListener('click', () => closeAllPopovers());
+
+    // Throttle controls
+    function updateThrottleUI() {
+      const map = { idle: 0.45, cruise: 1.0, afterburner: 1.85 };
+      targetRpm = map[throttleMode] || 1.0;
+      document.querySelectorAll('.throttle-btn').forEach(btn => {
+        const active = btn.dataset.throttle === throttleMode;
+        btn.className = active
+          ? 'throttle-btn px-2.5 py-1 rounded-full bg-[#d8a458]/25 text-[#d8a458] cursor-pointer'
+          : 'throttle-btn px-2.5 py-1 rounded-full pill-btn text-[#eae4d3]/55';
+      });
+    }
+    document.querySelectorAll('.throttle-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        throttleMode = btn.dataset.throttle;
+        updateThrottleUI();
+      });
+    });
+
+    // Sliders
+    document.getElementById('jetVolSlider').addEventListener('input', (e) => {
+      const v = parseFloat(e.target.value);
+      sound.setJetVol(v);
+      document.getElementById('jetVolVal').textContent = `${Math.round(v * 100)}%`;
+    });
+    document.getElementById('lofiVolSlider').addEventListener('input', (e) => {
+      const v = parseFloat(e.target.value);
+      sound.setLofiVol(v);
+      document.getElementById('lofiVolVal').textContent = `${Math.round(v * 100)}%`;
+    });
+    document.getElementById('labOpacitySlider').addEventListener('input', (e) => {
+      labOpacity = parseFloat(e.target.value);
+      document.getElementById('labOpacityVal').textContent = `${Math.round(labOpacity * 100)}%`;
+    });
+
+    // Layer chips
+    function updateLayerChips() {
+      document.querySelectorAll('.layer-chip').forEach(chip => {
+        const on = layers[chip.dataset.layer];
+        chip.className = on
+          ? 'layer-chip py-1.5 rounded-lg border border-[#d8a458]/45 bg-[#d8a458]/15 text-[#eae4d3] text-[11px] cursor-pointer'
+          : 'layer-chip py-1.5 rounded-lg border border-white/10 bg-white/5 text-[#eae4d3]/40 text-[11px] cursor-pointer';
+      });
+    }
+    document.querySelectorAll('.layer-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        layers[chip.dataset.layer] = !layers[chip.dataset.layer];
+        updateLayerChips();
+      });
+    });
+
+    document.getElementById('randomizeLabBtn').addEventListener('click', () => {
+      randomizeLab();
+      whisper('Lab graphs & code refreshed');
+    });
+
+    document.getElementById('fullscreenBtn').addEventListener('click', () => {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+      else document.exitFullscreen?.().catch(() => {});
+    });
+
+    // Countdown cycle & date editor
+    document.getElementById('cycleTargetBtn').addEventListener('click', () => {
+      activeMilestoneIdx = (activeMilestoneIdx + 1) % milestones.length;
+      updateClockAndCountdown();
+    });
+
+    document.getElementById('editDateBtn').addEventListener('click', () => {
+      const container = document.getElementById('dateInputsContainer');
+      container.innerHTML = '';
+      milestones.forEach((m, idx) => {
+        const row = document.createElement('div');
+        row.innerHTML = `
+          <label class="block text-[11px] text-[#eae4d3]/75 mb-1">${m.label}</label>
+          <input data-idx="${idx}" type="datetime-local" value="${m.date}"
+            class="w-full bg-white/5 border border-white/15 rounded-lg px-2.5 py-1.5 text-xs text-[#eae4d3] focus:outline-none focus:border-[#d8a458]/60" />
+        `;
+        container.appendChild(row);
+      });
+      closeAllPopovers(dateEditorPopover);
+      dateEditorPopover.classList.remove('hidden');
+    });
+
+    document.getElementById('closeDateEditorBtn').addEventListener('click', () => closeAllPopovers());
+
+    document.getElementById('saveDatesBtn').addEventListener('click', () => {
+      document.querySelectorAll('#dateInputsContainer input').forEach(inp => {
+        const idx = parseInt(inp.dataset.idx, 10);
+        if (inp.value) milestones[idx].date = inp.value;
+      });
+      saveJSON('aero_milestones_v3', milestones);
+      closeAllPopovers();
+      updateClockAndCountdown();
+      whisper('Milestone dates saved');
+    });
+
+    // Today's Plan Menu toggle (Starts ON by default; user can switch OFF or ON anytime)
+    let planOpen = loadJSON('aero_plan_open_v4', true);
+
+    function syncPlanMenuUI() {
+      document.getElementById('planShelf').classList.toggle('collapsed', !planOpen);
+      document.getElementById('planArrow').textContent = planOpen ? '▼' : '▲';
+
+      const badge = document.getElementById('planStatusBadge');
+      badge.textContent = planOpen ? 'ON' : 'OFF';
+      badge.className = planOpen
+        ? 'mono text-[9px] uppercase px-1.5 py-0.5 rounded bg-[#d8a458]/20 text-[#d8a458]'
+        : 'mono text-[9px] uppercase px-1.5 py-0.5 rounded bg-white/10 text-[#eae4d3]/45';
+
+      const dotCls = planOpen
+        ? 'w-1.5 h-1.5 rounded-full bg-[#d8a458] shadow-[0_0_8px_rgba(216,164,88,0.8)] transition'
+        : 'w-1.5 h-1.5 rounded-full bg-[#eae4d3]/30 transition';
+      document.getElementById('planTabDot').className = dotCls;
+      document.getElementById('planTopDot').className = dotCls;
+      document.getElementById('planTopToggleBtn').classList.toggle('active', planOpen);
+    }
+
+    function setPlanMenuOpen(next) {
+      planOpen = next;
+      saveJSON('aero_plan_open_v4', planOpen);
+      syncPlanMenuUI();
+    }
+
+    document.getElementById('planToggleBtn').addEventListener('click', () => setPlanMenuOpen(!planOpen));
+    document.getElementById('planTopToggleBtn').addEventListener('click', () => setPlanMenuOpen(!planOpen));
+    document.getElementById('planCloseMenuBtn').addEventListener('click', () => setPlanMenuOpen(false));
+
+    // Zen Mode
+    function setZen(on) {
+      document.body.classList.toggle('zen-mode', on);
+      document.getElementById('uiLayer').classList.toggle('zen-hidden', on);
+      if (on) closeAllPopovers();
+    }
+    document.getElementById('zenBtn').addEventListener('click', () => setZen(true));
+    document.getElementById('zenRevealBtn').addEventListener('click', () => setZen(false));
+
+    /*************************************************************************
+     * 9. MAIN ANIMATION LOOP
+     *************************************************************************/
+    let lastTime = 0;
+    function animate(ts) {
+      const dt = Math.min(0.05, (ts - lastTime) / 1000 || 0.016);
+      lastTime = ts;
+      const t = ts / 1000;
+
+      // Render background lab (behind engine)
+      lctx.clearRect(0, 0, W, H);
+      drawFullWidthWaves(lctx, t);
+      drawCodeBehindEngine(lctx, dt);
+      drawMathSketch(lctx, t, dt);
+      drawPhysicsSim(lctx, t, dt);
+      drawSnow(lctx, dt);
+
+      // Render 3D engineering robotics blueprints (behind engine)
+      updateRobotics3D(t);
+
+      // Render fixed centerpiece jet engine
+      drawJetEngine(ectx, dt);
+      sound.updateThrottle(currentRpm);
+
+      requestAnimationFrame(animate);
+    }
+
+    window.addEventListener('resize', resize);
+    window.onload = function () {
+      initRobotics3D();
+      resize();
+      renderPlan();
+      syncPlanMenuUI();
+      updateThrottleUI();
+      updateLayerChips();
+      updateClockAndCountdown();
+      setInterval(updateClockAndCountdown, 500);
+      enableJetAudioOnLoad();
+      lastTime = performance.now();
+      requestAnimationFrame(animate);
+    };
+  </script>
+</body>
+</html>
